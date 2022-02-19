@@ -1,5 +1,3 @@
-
-
 // Background code goes here
 chrome.browserAction.onClicked.addListener((/* tab */) => {
   // Opens our extension in a new browser window.
@@ -140,7 +138,15 @@ async function main() {
       if (changed > 0) {
         getUpdate(changed);
       }
-      chrome.storage.local.set({"ArknightsCardInformation": mergedData}, function () {
+      chrome.storage.local.set({"ArknightsCardInformation": mergedData}, () => {
+      });
+      pools = [];
+      mergedData.forEach(item => {
+        if (!pools.includes(item.pool)) {
+          pools.push(item.pool);
+        }
+      });
+      chrome.storage.local.set({"pools": pools}, () => {
       });
     }
   }

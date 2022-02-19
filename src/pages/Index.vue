@@ -3,13 +3,11 @@
 
     <div class="column" style="width: 65%">
       <div class="col" style="margin-bottom: 20px;">
-        <q-select filled v-model="poolsChoose" :options="pools" label="指定池子"/>
-        <q-item-label>样本数量: {{ numberCount >= 0 ? numberCount : "未知" }}</q-item-label>
-
-        <q-btn-toggle v-model="shownModel" spread class="my-custom-toggle" no-caps rounded unelevated toggle-color="primary" color="white" text-color="primary"
+        <q-btn-toggle style="margin-bottom: 20px;" v-model="shownMode" spread class="my-custom-toggle" no-caps rounded unelevated toggle-color="primary" color="white" text-color="primary"
                       :options="[  {label: '有限选择', value: '1'}, {label: '全部列出', value: '2'} ]"/>
 
-        <div class="q-pa-md" style="max-width: 100%">
+        <q-select filled v-model="poolsChoose" :options="pools"  v-if="shownMode === '1'" label="指定池子"/>
+        <div class="q-pa-md" v-if="shownMode === '1'" style="max-width: 100%">
           <q-list bordered class="rounded-borders">
             <q-expansion-item
               expand-separator
@@ -31,15 +29,14 @@
                 </q-card-section>
               </q-card>
             </q-expansion-item>
-
-
           </q-list>
         </div>
       </div>
 
 
       <div class="col">
-        <q-markup-table>
+        <div v-if="shownMode === '1'" class="text-h6">样本数量: {{ numberCount }}</div>
+        <q-markup-table v-if="shownMode === '1'">
           <thead>
           <tr>
             <th class="text-left">#</th>
@@ -57,6 +54,36 @@
           </tr>
           </tbody>
         </q-markup-table>
+
+        <q-card v-else>
+          <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
+            <q-tab v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool" :label="info.pool"/>
+          </q-tabs>
+          <q-separator/>
+          <q-tab-panels v-model="shownTab" animated>
+            <q-tab-panel v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool">
+              <div class="text-h6">样本数量: {{ info.count }}</div>
+              <q-markup-table>
+                <thead>
+                <tr>
+                  <th class="text-left">#</th>
+                  <th class="text-right">干员类型</th>
+                  <th class="text-right">出货概率</th>
+                  <th class="text-right">平均重复率</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="data in info.totalInfos" :key="data.id">
+                  <td class="text-left">{{ data.id }}</td>
+                  <td class="text-right">{{ data.type }}</td>
+                  <td class="text-right">{{ (data.probability * 100).toFixed(4) }}%</td>
+                  <td class="text-right">{{ (data.repetition * 100).toFixed(4) }}%</td>
+                </tr>
+                </tbody>
+              </q-markup-table>
+            </q-tab-panel>
+          </q-tab-panels>
+        </q-card>
 
       </div>
     </div>
@@ -86,12 +113,14 @@ export default defineComponent({
   data: () => ({
     show: "Quasar",
     totalInfos: [],
+    multiTotalInfos: [],
     poolsChoose: ref(null),
     pools: [],
     numberCount: -1,
     dateLimit: ref({from: '2019/01/01', to: '2019/01/01'}),
     enableTimeLimit: ref(false),
-    shownModel: ref("1"),
+    shownMode: "1",
+    shownTab: "",
   }),
   methods: {
     async updateInformation(options = {}) {
@@ -103,13 +132,23 @@ export default defineComponent({
       this.totalInfos.push({probability: rateInfo.probability.star4, repetition: rateInfo.repetitionRate.star4, type: '4星', id: 2});
       this.totalInfos.push({probability: rateInfo.probability.star3, repetition: rateInfo.repetitionRate.star3, type: '3星', id: 3});
       this.numberCount = probability.count;
-      console.log(this.totalInfos);
     },
-    async showAll(){
+    async showAll() {
       let pools = await readLocalStorage("pools");
       this.pools = pools;
       this.poolsChoose = ref(pools[0]);
-
+      this.multiTotalInfos = [];
+      for (const pool of this.pools) {
+        let probability = await this.getProbabilityInfo({pool: pool});
+        let rateInfo = this.calculateRate(probability);
+        let totalInfos = [];
+        totalInfos.push({probability: rateInfo.probability.star6, repetition: rateInfo.repetitionRate.star6, type: '6星', id: 0});
+        totalInfos.push({probability: rateInfo.probability.star5, repetition: rateInfo.repetitionRate.star5, type: '5星', id: 1});
+        totalInfos.push({probability: rateInfo.probability.star4, repetition: rateInfo.repetitionRate.star4, type: '4星', id: 2});
+        totalInfos.push({probability: rateInfo.probability.star3, repetition: rateInfo.repetitionRate.star3, type: '3星', id: 3});
+        this.multiTotalInfos.push({pool: pool, totalInfos: totalInfos, count: probability.count});
+      }
+      this.shownTab = this.pools.length > 0 ? this.pools[0] : "";
     },
     async getPoolsInfo() {
       let result = await readLocalStorage('ArknightsCardInformation');
@@ -229,7 +268,13 @@ export default defineComponent({
         }
       })
   },
-  watch: {}
+  watch: {
+    "shownMode": function (val) {
+      if (val === "2") {
+        this.showAll();
+      }
+    }
+  }
 });
 
 console.log("loaded");
