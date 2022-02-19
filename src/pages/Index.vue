@@ -1,12 +1,14 @@
 <template>
   <q-page class="flex flex-center">
-
     <div class="column" style="width: 65%">
+      <div class="col" style="margin-bottom: 20px;">
+        <div class="text-h3 vertical-middle	">ArkRecord</div>
+      </div>
       <div class="col" style="margin-bottom: 20px;">
         <q-btn-toggle style="margin-bottom: 20px;" v-model="shownMode" spread class="my-custom-toggle" no-caps rounded unelevated toggle-color="primary" color="white" text-color="primary"
                       :options="[  {label: '有限选择', value: '1'}, {label: '全部列出', value: '2'} ]"/>
 
-        <q-select filled v-model="poolsChoose" :options="pools"  v-if="shownMode === '1'" label="指定池子"/>
+        <q-select filled v-model="poolsChoose" :options="pools" v-if="shownMode === '1'" label="指定池子"/>
         <div class="q-pa-md" v-if="shownMode === '1'" style="max-width: 100%">
           <q-list bordered class="rounded-borders">
             <q-expansion-item
@@ -139,7 +141,7 @@ export default defineComponent({
       this.poolsChoose = ref(pools[0]);
       this.multiTotalInfos = [];
       for (const pool of this.pools) {
-        let probability = await this.getProbabilityInfo({pool: pool});
+        let probability = await this.getProbabilityInfo({poolLimit: pool});
         let rateInfo = this.calculateRate(probability);
         let totalInfos = [];
         totalInfos.push({probability: rateInfo.probability.star6, repetition: rateInfo.repetitionRate.star6, type: '6星', id: 0});
