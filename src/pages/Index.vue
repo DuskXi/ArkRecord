@@ -152,7 +152,7 @@ export default defineComponent({
         totalInfos.push({probability: rateInfo.probability.star3, repetition: rateInfo.repetitionRate.star3, type: '3星', id: 3});
         this.multiTotalInfos.push({pool: pool, totalInfos: totalInfos, count: probability.count});
       }
-      this.pools.push("All");
+      // this.pools.unshift("All");
       this.shownTab = this.pools.length > 0 ? this.pools[0] : "";
     },
     async getPoolsInfo() {
@@ -162,7 +162,7 @@ export default defineComponent({
         if (!this.pools.includes(item.pool))
           this.pools.push(item.pool);
       });
-      this.pools.push("All");
+      this.pools.unshift("All");
     },
     async getProbabilityInfo(options = {}) {
       let datetimeLimit = {from: new Date("2019-1-1"), "to": new Date()};
@@ -287,6 +287,10 @@ export default defineComponent({
     "shownMode": function (val) {
       if (val === "2") {
         this.showAll();
+      }
+      else {
+        this.getPoolsInfo();
+        this.poolsChoose = "All";
       }
     }
   }
