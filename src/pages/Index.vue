@@ -5,7 +5,7 @@
         <div class="text-h3 vertical-middle	">ArkRecord</div>
       </div>
       <div class="col" style="margin-bottom: 20px;">
-        <q-btn-toggle style="margin-bottom: 20px; opacity: .7" v-model="shownMode" spread class="my-custom-toggle" no-caps rounded unelevated toggle-color="primary" color="white" text-color="primary"
+        <q-btn-toggle style="margin-bottom: 20px; opacity: .85" v-model="shownMode" spread class="my-custom-toggle" no-caps rounded unelevated toggle-color="primary" color="white" text-color="primary"
                       :options="[  {label: '有限选择', value: '1'}, {label: '全部列出', value: '2'} ]"/>
 
         <q-select filled v-model="poolsChoose" :options="pools" v-if="shownMode === '1'" label="指定池子"/>
@@ -38,7 +38,7 @@
 
       <div class="col">
         <div v-if="shownMode === '1'" class="text-h6">样本数量: {{ numberCount }}</div>
-        <q-markup-table v-if="shownMode === '1'">
+        <q-markup-table v-if="shownMode === '1'" style="background-color: rgba(255,255,255, 0.7)">
           <thead>
           <tr>
             <th class="text-left">#</th>
@@ -57,15 +57,15 @@
           </tbody>
         </q-markup-table>
 
-        <q-card v-else>
+        <q-card v-else style="background-color: rgba(255,255,255, 0.5)"  >
           <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
             <q-tab v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool" :label="info.pool"/>
           </q-tabs>
           <q-separator/>
-          <q-tab-panels v-model="shownTab" animated>
+          <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)"  animated>
             <q-tab-panel v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool">
               <div class="text-h6">样本数量: {{ info.count }}</div>
-              <q-markup-table>
+              <q-markup-table style="background-color: rgba(255,255,255, 0.6)">
                 <thead>
                 <tr>
                   <th class="text-left">#</th>
@@ -88,7 +88,12 @@
         </q-card>
 
         <div class="col" style="margin-top: 20px">
-          <q-btn class="float-right" color="secondary" label="导出数据" @click="exportData()"/>
+          <q-btn-group class="float-right" push>
+            <q-btn color="secondary" label="导出数据" @click="exportData()"/>
+            <q-btn color="positive" label="导入数据" @click="loadData()"/>
+          </q-btn-group>
+          <input type="file" style="visibility: hidden" id="uploader" @change="fileLoaded()">
+
         </div>
       </div>
     </div>
@@ -101,7 +106,10 @@
 <script>
 import {defineComponent} from "vue";
 import {ref} from "vue";
+import { Notify } from 'quasar'
+import { useQuasar } from 'quasar'
 import async from "async";
+
 
 const readLocalStorage = async (key) => {
   return new Promise((resolve, reject) => {
@@ -114,6 +122,44 @@ const readLocalStorage = async (key) => {
     });
   });
 };
+
+function checkStructure(data) {
+  if (!data instanceof Array) {
+    return false;
+  }
+  data.forEach(item => {
+    if (typeof (item.pool) == 'string' && typeof (item.timestamp) == 'number' && item.result instanceof Array) {
+      item.result.forEach(element => {
+        if (typeof (element["isNew"]) == 'boolean' && typeof (element.name) == 'string' && typeof (element["rarity"]) == 'number') {
+        } else {
+          return false;
+        }
+      });
+    } else {
+      return false;
+    }
+  });
+  return true;
+}
+
+async function mergeData(data) {
+  let local = await readLocalStorage("ArknightsCardInformation");
+  let changed = 0;
+  if (checkStructure(local)) {
+    let arrayTimestamp = [];
+    local.forEach(item => {
+      arrayTimestamp.push(item.timestamp);
+    });
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (arrayTimestamp.includes(data[i].timestamp)) {
+        continue;
+      }
+      local.unshift(data[i]);
+      changed++;
+    }
+  }
+  return [local, changed];
+}
 
 function download(url, name) {
   const a = document.createElement('a')
@@ -283,6 +329,50 @@ export default defineComponent({
       }
       const dataUrl = `data:,${JSON.stringify(data, null, 4)}`;
       download(dataUrl, 'exported_data.json')
+    },
+    loadData() {
+      document.getElementById("uploader").click();
+    },
+    fileLoaded() {
+      let file = document.getElementById("uploader").files[0];
+      const reader = new FileReader();
+      var core = this;
+      reader.onload = async function (evt) {
+        let data = JSON.parse(evt.target.result);
+        if (data.hasOwnProperty("poolsData")) {
+          let merged = await mergeData(data.poolsData);
+          let mergedData = merged[0];
+          mergedData.sort(function (a, b) {
+            return b.timestamp - a.timestamp
+          });
+          chrome.storage.local.set({"ArknightsCardInformation": mergedData}, () => {
+          });
+          let pools = [];
+          mergedData.forEach(item => {
+            if (!pools.includes(item.pool)) pools.push(item.pool);
+          });
+          chrome.storage.local.set({"pools": pools}, () => {
+          });
+          Notify.create({
+            type: 'positive',
+            message: '成功导入数据 ' + merged[1] + ' 条'
+          })
+          await core.updateInformation();
+          await core.getPoolsInfo();
+          if (core.shownMode === "2") {
+            await core.showAll();
+          } else {
+            await core.getPoolsInfo();
+            core.poolsChoose = "All";
+          }
+        } else {
+          Notify.create({
+            type: 'negative',
+            message: '导入数据失败，请检查文件是否正确'
+          })
+        }
+      };
+      reader.readAsText(file);
     }
   },
   mounted() {
@@ -319,7 +409,7 @@ console.log("loaded");
 
 
 body {
-  background: url(/www/88294874_p0.jpeg) no-repeat center fixed;
+  background: url(/www/background.jpg) no-repeat center fixed;
   background-size: cover;
 }
 
