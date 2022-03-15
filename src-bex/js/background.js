@@ -127,6 +127,8 @@ function getUpdate(count) {
 async function main() {
   await init();
   if (logged) {
+    chrome.storage.local.set({"login": true}, () => {
+    });
     let result = await getData();
     if (result === false) {
       console.log('login failed');
@@ -149,6 +151,9 @@ async function main() {
       chrome.storage.local.set({"pools": pools}, () => {
       });
     }
+  } else {
+    chrome.storage.local.set({"login": false}, () => {
+    });
   }
 }
 
@@ -156,3 +161,15 @@ main().then(r => {
   // console.log(r)
   console.log(token)
 }).catch(e => console.log(e));
+
+chrome.runtime.onMessage.addListener(
+  function (request, sender, sendResponse) {
+    if (request.hasOwnProperty("Type")) {
+      if (request.Type === "refresh") {
+        main().then(r => {
+          sendResponse({message: "refreshed"});
+        });
+      }
+    }
+  }
+);

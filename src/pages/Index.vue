@@ -57,12 +57,12 @@
           </tbody>
         </q-markup-table>
 
-        <q-card v-else style="background-color: rgba(255,255,255, 0.5)"  >
+        <q-card v-else style="background-color: rgba(255,255,255, 0.5)">
           <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
             <q-tab v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool" :label="info.pool"/>
           </q-tabs>
           <q-separator/>
-          <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)"  animated>
+          <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)" animated>
             <q-tab-panel v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool">
               <div class="text-h6">样本数量: {{ info.count }}</div>
               <q-markup-table style="background-color: rgba(255,255,255, 0.6)">
@@ -89,6 +89,7 @@
 
         <div class="col" style="margin-top: 20px">
           <q-btn-group class="float-right" push>
+            <q-btn color="accent" label="刷新数据" @click="refreshData()"/>
             <q-btn color="secondary" label="导出数据" @click="exportData()"/>
             <q-btn color="positive" label="导入数据" @click="loadData()"/>
           </q-btn-group>
@@ -106,8 +107,9 @@
 <script>
 import {defineComponent} from "vue";
 import {ref} from "vue";
-import { Notify } from 'quasar'
-import { useQuasar } from 'quasar'
+import {Notify} from 'quasar'
+import {Dialog} from 'quasar'
+import {useQuasar} from 'quasar'
 import async from "async";
 
 
@@ -182,6 +184,7 @@ export default defineComponent({
     enableTimeLimit: ref(false),
     shownMode: "1",
     shownTab: "",
+    login: false
   }),
   methods: {
     async updateInformation(options = {}) {
@@ -373,10 +376,30 @@ export default defineComponent({
         }
       };
       reader.readAsText(file);
-    }
+    },
+    refreshData() {
+      chrome.runtime.sendMessage({Type: "refresh"}, function (response) {
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      });
+    },
+    async checkLogin() {
+      this.login = await readLocalStorage("login");
+      if (!this.login) {
+        const core = this;
+        Dialog.create({
+          title: 'Alert',
+          message: '鹰角网站未登录，无法获取数据，请先登录'
+        }).onOk(() => {
+          core.refreshData();
+        })
+      }
+    },
   },
   mounted() {
     console.log("mounted");
+    this.checkLogin();
     this.updateInformation();
     this.getPoolsInfo();
     this.dateLimit["from"] = this.getCurrentDate();
@@ -390,6 +413,16 @@ export default defineComponent({
           this.updateInformation({"poolLimit": val[0]});
         }
       })
+
+    chrome.runtime.onMessage.addListener(
+      function (request, sender, sendResponse) {
+        if (request.hasOwnProperty("Message")) {
+          if (request.Message === "refreshed") {
+            location.reload();
+          }
+        }
+      }
+    );
   },
   watch: {
     "shownMode": function (val) {

@@ -19,12 +19,17 @@
       </tr>
       </tbody>
     </q-markup-table>
+    <div class="text-h6 vertical-middle" style="color: red; margin-top: 20px;margin-bottom: 20px;" v-if="!login">鹰角网站未登录</div>
+    <q-btn color="primary" style="margin-top: 20px; margin-bottom: 20px;" v-if="!login" label="点击刷新数据" @click="update"/>
   </q-page>
 </template>
 
 <script>
 
 import {defineComponent} from "vue";
+import {Dialog} from 'quasar'
+import {useQuasar} from 'quasar'
+import async from "async";
 
 const readLocalStorage = async (key) => {
   return new Promise((resolve, reject) => {
@@ -43,11 +48,12 @@ export default defineComponent({
   data: () => ({
     show: "Quasar",
     totalInfos: [],
+    login: false,
   }),
   methods: {
     gotoInformationPage() {
       let newURL = "www/index.html#/";
-      chrome.tabs.create({ url: newURL });
+      chrome.tabs.create({url: newURL});
     },
     async updateInformation() {
       let probability = await this.getProbabilityInfo({});
@@ -141,13 +147,32 @@ export default defineComponent({
           star3: repetitionRate3Star
         }
       };
+    },
+    async checkLogin() {
+      this.login = await readLocalStorage("login");
+    },
+    async update() {
+      chrome.runtime.sendMessage({Type: "refresh"}, function (response) {
+        location.reload();
+      });
     }
   },
   mounted() {
+    chrome.runtime.onMessage.addListener(
+      function (request, sender, sendResponse) {
+        if (request.hasOwnProperty("message")) {
+          if (request.Message === "refreshed") {
+            location.reload();
+          }
+        }
+      }
+    );
     console.log("mounted");
     this.updateInformation();
+    this.checkLogin();
   }
-});
+})
+;
 
 console.log("loaded");
 </script>
