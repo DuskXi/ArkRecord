@@ -1,96 +1,98 @@
 <template>
-  <q-page class="flex flex-center">
-    <div class="column" style="width: 65%">
-      <div class="col" style="margin-bottom: 20px;">
-        <div class="text-h3 vertical-middle	">ArkRecord</div>
-      </div>
-      <div class="col" style="margin-bottom: 20px;">
-        <q-btn-toggle style="margin-bottom: 20px;" v-model="shownMode" spread class="my-custom-toggle" no-caps rounded unelevated toggle-color="primary" color="white" text-color="primary"
-                      :options="[  {label: '有限选择', value: '1'}, {label: '全部列出', value: '2'} ]"/>
+  <q-page class="flex flex-center -primary mainBody ">
+      <div class="column" style="width: 65%">
+        <div class="col" style="margin-bottom: 20px;">
+          <div class="text-h3 vertical-middle	">ArkRecord</div>
+        </div>
+        <div class="col" style="margin-bottom: 20px;">
+          <q-btn-toggle style="margin-bottom: 20px; opacity: .7" v-model="shownMode" spread class="my-custom-toggle" no-caps rounded unelevated toggle-color="primary" color="white" text-color="primary"
+                        :options="[  {label: '有限选择', value: '1'}, {label: '全部列出', value: '2'} ]"/>
 
-        <q-select filled v-model="poolsChoose" :options="pools" v-if="shownMode === '1'" label="指定池子"/>
-        <div class="q-pa-md" v-if="shownMode === '1'" style="max-width: 100%">
-          <q-list bordered class="rounded-borders">
-            <q-expansion-item
-              expand-separator
-              icon="perm_identity"
-              label="时间区间"
-              :caption='enableTimeLimit? "从: "+dateLimit["from"]  +"到: "+dateLimit["to"] :"未启用"'>
-              <q-card>
-                <q-card-section>
-                  <q-btn style="" color="primary" icon="info" label="清除时间数据" @click="cleanDate"/>
-                  <q-toggle v-model="enableTimeLimit" label="启用时间限制"/>
-                  <div class="q-pa-md" v-if="enableTimeLimit">
-                    <div class="q-mb-sm">
-                      <q-badge color="teal">
-                        时间区间 从: {{ dateLimit["from"] }} 到: {{ dateLimit["to"] }}
-                      </q-badge>
+          <q-select filled v-model="poolsChoose" :options="pools" v-if="shownMode === '1'" label="指定池子"/>
+          <div class="q-pa-md" v-if="shownMode === '1'" style="max-width: 100%">
+            <q-list bordered class="rounded-borders">
+              <q-expansion-item
+                expand-separator
+                icon="perm_identity"
+                label="时间区间"
+                :caption='enableTimeLimit? "从: "+dateLimit["from"]  +"到: "+dateLimit["to"] :"未启用"'>
+                <q-card style="background-color: rgba(255, 255, 255, 0.25);">
+                  <q-card-section>
+                    <q-btn style="" color="primary" icon="info" label="清除时间数据" @click="cleanDate"/>
+                    <q-toggle v-model="enableTimeLimit" label="启用时间限制"/>
+                    <div class="q-pa-md" v-if="enableTimeLimit">
+                      <div class="q-mb-sm">
+                        <q-badge color="teal">
+                          时间区间 从: {{ dateLimit["from"] }} 到: {{ dateLimit["to"] }}
+                        </q-badge>
+                      </div>
+                      <q-date v-model="dateLimit" range/>
                     </div>
-                    <q-date v-model="dateLimit" range/>
-                  </div>
-                </q-card-section>
-              </q-card>
-            </q-expansion-item>
-          </q-list>
+                  </q-card-section>
+                </q-card>
+              </q-expansion-item>
+            </q-list>
+          </div>
+        </div>
+
+
+        <div class="col">
+          <div v-if="shownMode === '1'" class="text-h6">样本数量: {{ numberCount }}</div>
+          <q-markup-table v-if="shownMode === '1'">
+            <thead>
+            <tr>
+              <th class="text-left">#</th>
+              <th class="text-right">干员类型</th>
+              <th class="text-right">出货概率</th>
+              <th class="text-right">平均重复率</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="info in totalInfos" :key="info.id">
+              <td class="text-left">{{ info.id }}</td>
+              <td class="text-right">{{ info.type }}</td>
+              <td class="text-right">{{ (info.probability * 100).toFixed(4) }}%</td>
+              <td class="text-right">{{ (info.repetition * 100).toFixed(4) }}%</td>
+            </tr>
+            </tbody>
+          </q-markup-table>
+
+          <q-card v-else>
+            <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
+              <q-tab v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool" :label="info.pool"/>
+            </q-tabs>
+            <q-separator/>
+            <q-tab-panels v-model="shownTab" animated>
+              <q-tab-panel v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool">
+                <div class="text-h6">样本数量: {{ info.count }}</div>
+                <q-markup-table>
+                  <thead>
+                  <tr>
+                    <th class="text-left">#</th>
+                    <th class="text-right">干员类型</th>
+                    <th class="text-right">出货概率</th>
+                    <th class="text-right">平均重复率</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr v-for="data in info.totalInfos" :key="data.id">
+                    <td class="text-left">{{ data.id }}</td>
+                    <td class="text-right">{{ data.type }}</td>
+                    <td class="text-right">{{ (data.probability * 100).toFixed(4) }}%</td>
+                    <td class="text-right">{{ (data.repetition * 100).toFixed(4) }}%</td>
+                  </tr>
+                  </tbody>
+                </q-markup-table>
+              </q-tab-panel>
+            </q-tab-panels>
+          </q-card>
+
         </div>
       </div>
 
-
-      <div class="col">
-        <div v-if="shownMode === '1'" class="text-h6">样本数量: {{ numberCount }}</div>
-        <q-markup-table v-if="shownMode === '1'">
-          <thead>
-          <tr>
-            <th class="text-left">#</th>
-            <th class="text-right">干员类型</th>
-            <th class="text-right">出货概率</th>
-            <th class="text-right">平均重复率</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="info in totalInfos" :key="info.id">
-            <td class="text-left">{{ info.id }}</td>
-            <td class="text-right">{{ info.type }}</td>
-            <td class="text-right">{{ (info.probability * 100).toFixed(4) }}%</td>
-            <td class="text-right">{{ (info.repetition * 100).toFixed(4) }}%</td>
-          </tr>
-          </tbody>
-        </q-markup-table>
-
-        <q-card v-else>
-          <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
-            <q-tab v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool" :label="info.pool"/>
-          </q-tabs>
-          <q-separator/>
-          <q-tab-panels v-model="shownTab" animated>
-            <q-tab-panel v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool">
-              <div class="text-h6">样本数量: {{ info.count }}</div>
-              <q-markup-table>
-                <thead>
-                <tr>
-                  <th class="text-left">#</th>
-                  <th class="text-right">干员类型</th>
-                  <th class="text-right">出货概率</th>
-                  <th class="text-right">平均重复率</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="data in info.totalInfos" :key="data.id">
-                  <td class="text-left">{{ data.id }}</td>
-                  <td class="text-right">{{ data.type }}</td>
-                  <td class="text-right">{{ (data.probability * 100).toFixed(4) }}%</td>
-                  <td class="text-right">{{ (data.repetition * 100).toFixed(4) }}%</td>
-                </tr>
-                </tbody>
-              </q-markup-table>
-            </q-tab-panel>
-          </q-tab-panels>
-        </q-card>
-
-      </div>
-    </div>
-
   </q-page>
+  <!-- Notice lang="sass" -->
+
 </template>
 
 <script>
@@ -253,6 +255,9 @@ export default defineComponent({
     cleanDate(date) {
       this.dateLimit = ref({from: this.getCurrentDate(), to: this.getCurrentDate()});
     },
+    setTransparency(element){
+      console.log(element)
+    },
   },
   mounted() {
     console.log("mounted");
@@ -281,3 +286,20 @@ export default defineComponent({
 
 console.log("loaded");
 </script>
+<style>
+
+
+body {
+  background: url(/www/88294874_p0.jpeg) no-repeat center fixed;
+  background-size: cover;
+}
+
+.mainBody {
+  background-color: rgba(255, 255, 255, 0.65);
+
+}
+
+.backgroundC {
+  background-color: rgba(248, 249, 250, 0.35)
+}
+</style>
