@@ -1,14 +1,3 @@
-// Background code goes here
-chrome.browserAction.onClicked.addListener((/* tab */) => {
-  // Opens our extension in a new browser window.
-  // Only if a popup isn't defined in the manifest.
-  chrome.tabs.create({
-    url: chrome.extension.getURL('www/index.html')
-  }, (/* newTab */) => {
-    // Tab opened.
-  })
-})
-
 
 var token = null;
 var logged = false;
@@ -21,6 +10,7 @@ const readLocalStorage = async (key) => {
       } else {
         resolve(result[key]);
       }
+      reject();
     });
   });
 };
@@ -63,7 +53,7 @@ async function getData() {
 }
 
 function checkStructure(data) {
-  if (!data instanceof Array) {
+  if (!(data instanceof Array)) {
     return false;
   }
   data.forEach(item => {
@@ -157,8 +147,7 @@ async function main() {
   }
 }
 
-main().then(r => {
-  // console.log(r)
+main().then(() => {
   console.log(token)
 }).catch(e => console.log(e));
 
@@ -166,7 +155,7 @@ chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
     if (request.hasOwnProperty("Type")) {
       if (request.Type === "refresh") {
-        main().then(r => {
+        main().then(() => {
           sendResponse({message: "refreshed"});
         });
       }
