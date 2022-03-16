@@ -3,14 +3,13 @@ var token = null;
 var logged = false;
 var initialized = false;
 const readLocalStorage = async (key) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _) => {
     chrome.storage.local.get([key], function (result) {
       if (result[key] === undefined) {
         resolve([]);
       } else {
         resolve(result[key]);
       }
-      reject();
     });
   });
 };
