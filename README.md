@@ -2,6 +2,12 @@
 
 ***详细使用方法在这里 [Blog](https://duskxi.github.io/2022/03/16/ArkRecord/)***
 
+## 视频教程
+
+[Bilibili](https://www.bilibili.com/video/BV1HS4y1D7uZ)
+
+---
+
 这是一个基于[Quasar](https://quasar.dev)的Chrome插件。
 
 用于记录明日方舟的抽卡记录，并且进行统计。
