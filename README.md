@@ -47,3 +47,7 @@ quasar build -m bex
 #### 左上角点击加载已解压的扩展程序
 
 #### 选择你构建之后的Unpacked目录 或者去 release(~~过阵子发布~~) 中下载后解压
+
+---
+
+背景出处: https://www.pixiv.net/artworks/95185823
