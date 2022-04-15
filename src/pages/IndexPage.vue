@@ -43,6 +43,8 @@
           <tr>
             <th class="text-left">#</th>
             <th class="text-right">干员类型</th>
+            <th class="text-right">数量统计</th>
+            <th class="text-right">去重统计</th>
             <th class="text-right">出货概率</th>
             <th class="text-right">平均重复率</th>
           </tr>
@@ -51,6 +53,8 @@
           <tr v-for="info in totalInfos" :key="info.id">
             <td class="text-left">{{ info.id }}</td>
             <td class="text-right">{{ info.type }}</td>
+            <td class="text-right">{{ info.count }}</td>
+            <td class="text-right">{{ info.countNoRepetition }}</td>
             <td class="text-right">{{ (info.probability * 100).toFixed(4) }}%</td>
             <td class="text-right">{{ (info.repetition * 100).toFixed(4) }}%</td>
           </tr>
@@ -70,6 +74,8 @@
                 <tr>
                   <th class="text-left">#</th>
                   <th class="text-right">干员类型</th>
+                  <th class="text-right">数量统计</th>
+                  <th class="text-right">去重统计</th>
                   <th class="text-right">出货概率</th>
                   <th class="text-right">平均重复率</th>
                 </tr>
@@ -78,6 +84,8 @@
                 <tr v-for="data in info.totalInfos" :key="data.id">
                   <td class="text-left">{{ data.id }}</td>
                   <td class="text-right">{{ data.type }}</td>
+                  <td class="text-right">{{ data.count }}</td>
+                  <td class="text-right">{{ data.countNoRepetition }}</td>
                   <td class="text-right">{{ (data.probability * 100).toFixed(4) }}%</td>
                   <td class="text-right">{{ (data.repetition * 100).toFixed(4) }}%</td>
                 </tr>
@@ -187,10 +195,22 @@ export default defineComponent({
       let probability = await this.getProbabilityInfo(options);
       let rateInfo = this.calculateRate(probability);
       this.totalInfos = [];
-      this.totalInfos.push({probability: rateInfo.probability.star6, repetition: rateInfo.repetitionRate.star6, type: '6星', id: 0});
-      this.totalInfos.push({probability: rateInfo.probability.star5, repetition: rateInfo.repetitionRate.star5, type: '5星', id: 1});
-      this.totalInfos.push({probability: rateInfo.probability.star4, repetition: rateInfo.repetitionRate.star4, type: '4星', id: 2});
-      this.totalInfos.push({probability: rateInfo.probability.star3, repetition: rateInfo.repetitionRate.star3, type: '3星', id: 3});
+      this.totalInfos.push({
+        probability: rateInfo.probability.star6, repetition: rateInfo.repetitionRate.star6,
+        count: rateInfo.count.star6, countNoRepetition: rateInfo.countNoRepetition.star6, type: '6星', id: 0
+      });
+      this.totalInfos.push({
+        probability: rateInfo.probability.star5, repetition: rateInfo.repetitionRate.star5,
+        count: rateInfo.count.star5, countNoRepetition: rateInfo.countNoRepetition.star5, type: '5星', id: 1
+      });
+      this.totalInfos.push({
+        probability: rateInfo.probability.star4, repetition: rateInfo.repetitionRate.star4,
+        count: rateInfo.count.star4, countNoRepetition: rateInfo.countNoRepetition.star4, type: '4星', id: 2
+      });
+      this.totalInfos.push({
+        probability: rateInfo.probability.star3, repetition: rateInfo.repetitionRate.star3,
+        count: rateInfo.count.star3, countNoRepetition: rateInfo.countNoRepetition.star3, type: '3星', id: 3
+      });
       this.numberCount = probability.count;
     },
     async showAll() {
@@ -202,10 +222,22 @@ export default defineComponent({
         let probability = await this.getProbabilityInfo({poolLimit: pool});
         let rateInfo = this.calculateRate(probability);
         let totalInfos = [];
-        totalInfos.push({probability: rateInfo.probability.star6, repetition: rateInfo.repetitionRate.star6, type: '6星', id: 0});
-        totalInfos.push({probability: rateInfo.probability.star5, repetition: rateInfo.repetitionRate.star5, type: '5星', id: 1});
-        totalInfos.push({probability: rateInfo.probability.star4, repetition: rateInfo.repetitionRate.star4, type: '4星', id: 2});
-        totalInfos.push({probability: rateInfo.probability.star3, repetition: rateInfo.repetitionRate.star3, type: '3星', id: 3});
+        totalInfos.push({
+          probability: rateInfo.probability.star6, repetition: rateInfo.repetitionRate.star6,
+          count: rateInfo.count.star6, countNoRepetition: rateInfo.countNoRepetition.star6, type: '6星', id: 0
+        });
+        totalInfos.push({
+          probability: rateInfo.probability.star5, repetition: rateInfo.repetitionRate.star5,
+          count: rateInfo.count.star5, countNoRepetition: rateInfo.countNoRepetition.star5, type: '5星', id: 1
+        });
+        totalInfos.push({
+          probability: rateInfo.probability.star4, repetition: rateInfo.repetitionRate.star4,
+          count: rateInfo.count.star4, countNoRepetition: rateInfo.countNoRepetition.star4, type: '4星', id: 2
+        });
+        totalInfos.push({
+          probability: rateInfo.probability.star3, repetition: rateInfo.repetitionRate.star3,
+          count: rateInfo.count.star3, countNoRepetition: rateInfo.countNoRepetition.star3, type: '3星', id: 3
+        });
         this.multiTotalInfos.push({pool: pool, totalInfos: totalInfos, count: probability.count});
       }
       // this.pools.unshift("All");
@@ -306,6 +338,18 @@ export default defineComponent({
           star5: repetitionRate5Star,
           star4: repetitionRate4Star,
           star3: repetitionRate3Star
+        },
+        count: {
+          star6: times6Star,
+          star5: times5Star,
+          star4: times4Star,
+          star3: times4Star
+        },
+        countNoRepetition: {
+          star6: Object.keys(this.repetitionRate(data.star6)[0]).length,
+          star5: Object.keys(this.repetitionRate(data.star5)[0]).length,
+          star4: Object.keys(this.repetitionRate(data.star4)[0]).length,
+          star3: Object.keys(this.repetitionRate(data.star3)[0]).length,
         }
       };
     },
