@@ -1,5 +1,13 @@
 # Quasar App (arkrecord)
 
+***详细使用方法在这里 [Blog](https://duskxi.github.io/2022/03/16/ArkRecord/)***
+
+## 视频教程
+
+[Bilibili](https://www.bilibili.com/video/BV1HS4y1D7uZ)
+
+---
+
 这是一个基于[Quasar](https://quasar.dev)的Chrome插件。
 
 用于记录明日方舟的抽卡记录，并且进行统计。
@@ -24,7 +32,9 @@ quasar build -m bex
 
 ### 当你每次重启浏览器的时候，插件会自动获取抽卡数据，并且自动更新缓存。
 
-### 过阵子会直接丢到Chrome商店中(正在等待Google审核)
+### 过阵子会直接丢到Chrome商店中(~~正在等待Google审核~~ 谷歌审核已经过了，Web Store中搜索 `ArkRecord`)
+
+[Link](https://chrome.google.com/webstore/detail/arkrecord/mphjjhidfbbnjjnmpffepbfllgocggpl)
 
 ---
 
@@ -36,4 +46,8 @@ quasar build -m bex
 
 #### 左上角点击加载已解压的扩展程序
 
-#### 选择你构建之后的Unpacked目录 或者去 release(过阵子发布) 中下载后解压
+#### 选择你构建之后的Unpacked目录 或者去 release(~~过阵子发布~~) 中下载后解压
+
+---
+
+背景出处: https://www.pixiv.net/artworks/95185823
