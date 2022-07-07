@@ -153,7 +153,7 @@
 
               <div class="text-h6">发布日期: {{ new Date(updateInfo[updateInfoChoose.value].time).toLocaleString() }}</div>
 
-              <div class="text-h6">Github页面: <a :href="updateInfo[updateInfoChoose.value].url">{{updateInfo[updateInfoChoose.value].url}}</a></div>
+              <div class="text-h6">Github页面: <a :href="updateInfo[updateInfoChoose.value].url">{{ updateInfo[updateInfoChoose.value].url }}</a></div>
 
               <div class="text-h6" v-if="version !== updateInfo[0].tag_name">当前软件包版本: {{ version }}, 最新tag版本: {{ updateInfo[0].tag_name }}, 可能有更新</div>
 
@@ -293,11 +293,11 @@ export default defineComponent({
     async showAll() {
       let pools = await readLocalStorage("pools");
       this.pools = pools;
+      if (this.pools.indexOf("常驻标准寻访") >= 0)
+        this.pools.splice(this.pools.indexOf("常驻标准寻访"), 1)
       this.poolsChoose = ref(pools[0]);
       this.multiTotalInfos = [];
       for (const pool of this.pools) {
-        if (pool === "常驻标准寻访")
-          continue;
 
         let probability = await this.getProbabilityInfo({poolLimit: pool});
         let rateInfo = this.calculateRate(probability);
