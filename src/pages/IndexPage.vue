@@ -595,7 +595,7 @@ export default defineComponent({
             let info = {
               time: element["created_at"],
               body: element["body"],
-              url: element["url"],
+              url: element["html_url"],
               name: element["name"],
               tag_name: element["tag_name"]
             }
