@@ -296,6 +296,9 @@ export default defineComponent({
       this.poolsChoose = ref(pools[0]);
       this.multiTotalInfos = [];
       for (const pool of this.pools) {
+        if (pool.name === "常驻标准寻访") {
+          continue;
+        }
         let probability = await this.getProbabilityInfo({poolLimit: pool});
         let rateInfo = this.calculateRate(probability);
         let totalInfos = [];
