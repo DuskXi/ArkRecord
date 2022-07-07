@@ -6,10 +6,10 @@
       </div>
       <div class="col" style="margin-bottom: 20px;">
         <q-btn-toggle style="margin-bottom: 20px; opacity: .85" v-model="shownMode" spread class="my-custom-toggle" no-caps rounded unelevated toggle-color="primary" color="white" text-color="primary"
-                      :options="[  {label: '有限选择', value: '1'}, {label: '全部列出', value: '2'} ]"/>
+                      :options="[  {label: '有限选择', value: '1'}, {label: '全部列出', value: '2'}, {label: '纯常驻寻访', value: '3'} ]"/>
 
         <q-select filled v-model="poolsChoose" :options="pools" v-if="shownMode === '1'" label="指定池子"/>
-        <div class="q-pa-md" v-if="shownMode === '1'" style="max-width: 100%">
+        <div class="q-pa-md" v-if="shownMode === '1' || shownMode === '3'" style="max-width: 100%">
           <q-list bordered class="rounded-borders">
             <q-expansion-item
               expand-separator
@@ -61,7 +61,41 @@
           </tbody>
         </q-markup-table>
 
-        <q-card v-else style="background-color: rgba(255,255,255, 0.5)">
+        <q-card v-if="shownMode === '2'" style="background-color: rgba(255,255,255, 0.5)">
+          <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
+            <q-tab v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool" :label="info.pool"/>
+          </q-tabs>
+          <q-separator/>
+          <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)" animated>
+            <q-tab-panel v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool">
+              <div class="text-h6">样本数量: {{ info.count }}</div>
+              <q-markup-table style="background-color: rgba(255,255,255, 0.6)">
+                <thead>
+                <tr>
+                  <th class="text-left">#</th>
+                  <th class="text-right">干员类型</th>
+                  <th class="text-right">数量统计</th>
+                  <th class="text-right">去重统计</th>
+                  <th class="text-right">出货概率</th>
+                  <th class="text-right">平均重复率</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="data in info.totalInfos" :key="data.id">
+                  <td class="text-left">{{ data.id }}</td>
+                  <td class="text-right">{{ data.type }}</td>
+                  <td class="text-right">{{ data.count }}</td>
+                  <td class="text-right">{{ data.countNoRepetition }}</td>
+                  <td class="text-right">{{ (data.probability * 100).toFixed(4) }}%</td>
+                  <td class="text-right">{{ (data.repetition * 100).toFixed(4) }}%</td>
+                </tr>
+                </tbody>
+              </q-markup-table>
+            </q-tab-panel>
+          </q-tab-panels>
+        </q-card>
+
+        <q-card v-if="shownMode === '3'" style="background-color: rgba(255,255,255, 0.5)">
           <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
             <q-tab v-for="info in multiTotalInfos" :key="info.pool" :name="info.pool" :label="info.pool"/>
           </q-tabs>
@@ -104,6 +138,35 @@
           <input type="file" style="visibility: hidden" id="uploader" @change="fileLoaded()">
 
         </div>
+        <div class="q-pa-md q-gutter-sm absolute-bottom-left">
+          <q-btn round color="primary" icon="info" @click="showUpdateInfo()"/>
+        </div>
+
+        <q-dialog v-model="customDialogModel">
+          <q-card style="width: 700px; max-width: 80vw;">
+            <q-card-section>
+              <div class="text-h6">更新日志</div>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+              <q-select v-model="updateInfoChoose" :options="updateInfoOptions" label="Standard"/>
+
+              <q-markdown v-if="updateInfoChoose != null" style="margin-top: 10px">
+                {{ updateInfo[updateInfoChoose.value].body }}
+              </q-markdown>
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="OK" color="primary" v-close-popup/>
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+        <!--        <div class="col">-->
+        <!--          <q-markdown v-if="updateInfo.length > 0">-->
+        <!--            {{ updateInfo[0].body }}-->
+        <!--          </q-markdown>-->
+        <!--        </div>-->
+
       </div>
     </div>
 
@@ -116,12 +179,13 @@
 import {defineComponent} from "vue";
 import {ref} from "vue";
 import {Notify} from 'quasar';
+import {api} from 'boot/axios'
 
 const readLocalStorage = async (key) => {
   return new Promise((resolve, _) => {
     chrome.storage.local.get([key], function (result) {
       if (result[key] === undefined) {
-        resolve([]);
+        resolve(null);
       } else {
         resolve(result[key]);
       }
@@ -188,7 +252,12 @@ export default defineComponent({
     enableTimeLimit: ref(false),
     shownMode: "1",
     shownTab: "",
-    login: false
+    login: false,
+    updateInfo: [],
+    customDialogModel: false,
+    updateInfoChoose: ref(null),
+    updateInfoOptions: [],
+    updateInfoLoading: false,
   }),
   methods: {
     async updateInformation(options = {}) {
@@ -243,6 +312,75 @@ export default defineComponent({
       // this.pools.unshift("All");
       this.shownTab = this.pools.length > 0 ? this.pools[0] : "";
     },
+    async showNormal() {
+      this.pools = [];
+      this.multiTotalInfos = [];
+      let period = await this.splitTime()
+      period = period.sort((a, b) => b[0] - a[0])
+      for (let i = 0; i < period.length; i++) {
+        let timeOffset = new Date().getTimezoneOffset() * 60 * 1000;
+        let time_start = new Date((period[i][0] * 1000) + timeOffset);
+        let time_end = new Date((period[i][1] * 1000) + timeOffset);
+        if (this.enableTimeLimit) {
+          if (time_start < new Date(this.dateLimit["from"]) || time_end > new Date(this.dateLimit["to"]))
+            continue;
+        }
+        let probability = await this.getProbabilityInfo({poolLimit: "常驻标准寻访", datetimeLimit: {from: time_start, to: time_end}});
+        let rateInfo = this.calculateRate(probability);
+        let totalInfos = [];
+        totalInfos.push({
+          probability: rateInfo.probability.star6, repetition: rateInfo.repetitionRate.star6,
+          count: rateInfo.count.star6, countNoRepetition: rateInfo.countNoRepetition.star6, type: '6星', id: 0
+        });
+        totalInfos.push({
+          probability: rateInfo.probability.star5, repetition: rateInfo.repetitionRate.star5,
+          count: rateInfo.count.star5, countNoRepetition: rateInfo.countNoRepetition.star5, type: '5星', id: 1
+        });
+        totalInfos.push({
+          probability: rateInfo.probability.star4, repetition: rateInfo.repetitionRate.star4,
+          count: rateInfo.count.star4, countNoRepetition: rateInfo.countNoRepetition.star4, type: '4星', id: 2
+        });
+        totalInfos.push({
+          probability: rateInfo.probability.star3, repetition: rateInfo.repetitionRate.star3,
+          count: rateInfo.count.star3, countNoRepetition: rateInfo.countNoRepetition.star3, type: '3星', id: 3
+        });
+        let pool_name = "";
+        if (time_start.getFullYear() === time_end.getFullYear() && time_start.getMonth() === time_end.getMonth() && time_start.getDate() === time_end.getDate()) {
+          pool_name = time_start.toLocaleDateString() + " " + time_start.toLocaleTimeString() + "-" + time_end.toLocaleTimeString();
+        } else {
+          pool_name = time_start.toLocaleString() + "-" + time_end.toLocaleString();
+        }
+        this.multiTotalInfos.push({pool: pool_name, totalInfos: totalInfos, count: probability.count});
+        this.pools.push(pool_name)
+      }
+
+      // this.pools.unshift("All");
+      this.shownTab = this.pools.length > 0 ? this.pools[0] : "";
+    },
+    async splitTime() {
+      let data = await readLocalStorage("ArknightsCardInformation");
+      data = data.sort((a, b) => a.timestamp - b.timestamp);
+      let period = [];
+      let start_timestamp = 0;
+      let end_timestamp = 0;
+      data.forEach(element => {
+        if (element.pool === "常驻标准寻访") {
+          if (start_timestamp === 0) {
+            start_timestamp = element.timestamp;
+          }
+          end_timestamp = element.timestamp;
+        } else {
+          if (start_timestamp !== 0)
+            period.push([start_timestamp, end_timestamp])
+          start_timestamp = 0;
+          end_timestamp = 0;
+        }
+      });
+      if (start_timestamp !== 0) {
+        period.push([start_timestamp, end_timestamp])
+      }
+      return period;
+    },
     async getPoolsInfo() {
       let result = await readLocalStorage('ArknightsCardInformation');
       this.pools = [];
@@ -271,7 +409,7 @@ export default defineComponent({
       data.forEach(group => {
         let timeOffset = new Date().getTimezoneOffset() * 60 * 1000;
         let time = new Date((group.timestamp * 1000) + timeOffset);
-        if (time > datetimeLimit.from && time < datetimeLimit.to) {
+        if (time > datetimeLimit.from && time <= datetimeLimit.to) {
           if (timesLimit === -1 || count < timesLimit) {
             if (poolLimit === null || group.pool === poolLimit) {
               group.result.forEach(item => {
@@ -436,9 +574,41 @@ export default defineComponent({
         })
       }
     },
+    getUpdateInfo() {
+      let repo_url = "https://api.github.com/repos/DuskXi/ArkRecord/releases";
+      api.get(repo_url)
+        .then(async (response) => {
+          let data = response.data;
+          let index = 0;
+          data.forEach(element => {
+            let info = {
+              time: element["created_at"],
+              body: element["body"],
+              url: element["url"],
+              name: element["name"]
+            }
+            this.updateInfo.push(info);
+            this.updateInfoOptions.push({label: info.name, value: index});
+            index++;
+          })
+          if (this.updateInfoOptions.length > 0) {
+            this.updateInfoChoose = this.updateInfoOptions[0];
+            let last_version = await readLocalStorage("lastversion")
+            if (last_version == null || last_version === '' || last_version !== this.updateInfo[0].name) {
+              chrome.storage.local.set({"lastversion": this.updateInfo[0].name}, () => {
+              });
+              this.showUpdateInfo();
+            }
+          }
+        });
+    },
+    showUpdateInfo() {
+      this.customDialogModel = true;
+    }
   },
   mounted() {
     console.log("mounted");
+    this.getUpdateInfo();
     this.checkLogin();
     this.updateInformation();
     this.getPoolsInfo();
@@ -447,12 +617,15 @@ export default defineComponent({
     this.$watch(
       (vm) => [vm.poolsChoose, vm.dateLimit.from, vm.dateLimit.to, vm.enableTimeLimit],
       (val) => {
-        if (val[3]) {
+        if (this.shownMode === "3")
+          this.showNormal();
+        else if (val[3]) {
           this.updateInformation({"poolLimit": val[0], "datetimeLimit": {from: new Date(val[1]), to: new Date(val[2])}});
         } else {
           this.updateInformation({"poolLimit": val[0]});
         }
       })
+
 
     chrome.runtime.onMessage.addListener(
       function (request, _) {
@@ -468,9 +641,17 @@ export default defineComponent({
     "shownMode": function (val) {
       if (val === "2") {
         this.showAll();
+      } else if (val === "3") {
+        this.showNormal();
       } else {
         this.getPoolsInfo();
         this.poolsChoose = "All";
+      }
+    },
+    "updateInfoChoose": function (val) {
+      if (this.customDialogModel) {
+        this.customDialogModel = false;
+        setTimeout(() => this.customDialogModel = true, 150);
       }
     }
   }
