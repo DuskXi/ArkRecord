@@ -149,7 +149,7 @@
             </q-card-section>
 
             <q-card-section class="q-pt-none">
-              <q-select v-model="updateInfoChoose" :options="updateInfoOptions" label="Standard"/>
+              <q-select v-model="updateInfoChoose" :options="updateInfoOptions" label="发布信息版本选择"/>
 
               <div class="text-h6">发布日期: {{ new Date(updateInfo[updateInfoChoose.value].time).toLocaleString() }}</div>
 
