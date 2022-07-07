@@ -143,13 +143,19 @@
         </div>
 
         <q-dialog v-model="customDialogModel">
-          <q-card style="width: 700px; max-width: 80vw;">
+          <q-card style="width: 60vw; max-width: 90vw;">
             <q-card-section>
               <div class="text-h6">更新日志</div>
             </q-card-section>
 
             <q-card-section class="q-pt-none">
               <q-select v-model="updateInfoChoose" :options="updateInfoOptions" label="Standard"/>
+
+              <div class="text-h6">发布日期: {{ new Date(updateInfo[updateInfoChoose.value].time).toLocaleString() }}</div>
+
+              <div class="text-h6">Github页面: <a :href="updateInfo[updateInfoChoose.value].url">{{updateInfo[updateInfoChoose.value].url}}</a></div>
+
+              <div class="text-h6" v-if="version !== updateInfo[0].tag_name">当前软件包版本: {{ version }}, 最新tag版本: {{ updateInfo[0].tag_name }}, 可能有更新</div>
 
               <q-markdown v-if="updateInfoChoose != null" style="margin-top: 10px">
                 {{ updateInfo[updateInfoChoose.value].body }}
@@ -180,6 +186,7 @@ import {defineComponent} from "vue";
 import {ref} from "vue";
 import {Notify} from 'quasar';
 import {api} from 'boot/axios'
+import config from '../../package.json'
 
 const readLocalStorage = async (key) => {
   return new Promise((resolve, _) => {
@@ -242,6 +249,7 @@ function download(url, name) {
 export default defineComponent({
   name: "PageIndex",
   data: () => ({
+    version: config.version,
     show: "Quasar",
     totalInfos: [],
     multiTotalInfos: [],
@@ -585,7 +593,8 @@ export default defineComponent({
               time: element["created_at"],
               body: element["body"],
               url: element["url"],
-              name: element["name"]
+              name: element["name"],
+              tag_name: element["tag_name"]
             }
             this.updateInfo.push(info);
             this.updateInfoOptions.push({label: info.name, value: index});
@@ -607,7 +616,8 @@ export default defineComponent({
     }
   },
   mounted() {
-    console.log("mounted");
+    console.log(this.version);
+
     this.getUpdateInfo();
     this.checkLogin();
     this.updateInformation();
