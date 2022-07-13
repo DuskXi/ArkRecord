@@ -1,6 +1,6 @@
 {
   "name": "arkrecord",
-  "version": "v0.0.0.4",
+  "version": "v0.0.0.5",
   "description": "明日方舟抽卡记录统计插件",
   "productName": "ArkRecord",
   "author": "DuskXi <84715902+DuskXi@users.noreply.github.com>",
@@ -12,11 +12,14 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
+    "apexcharts": "^3.35.3",
     "axios": "^0.27.2",
     "events": "^3.3.0",
+    "html2canvas": "^1.4.1",
     "quasar": "^2.6.0",
     "vue": "^3.0.0",
-    "vue-router": "^4.0.0"
+    "vue-router": "^4.0.0",
+    "vue3-apexcharts": "^1.4.1"
   },
   "devDependencies": {
     "@quasar/app-vite": "^1.0.0-alpha.0",
