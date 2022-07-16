@@ -1,7 +1,9 @@
-
 var token = null;
 var logged = false;
 var initialized = false;
+var tokenB = null;
+var loggedB = false;
+var initializedB = false;
 const readLocalStorage = async (key) => {
   return new Promise((resolve, _) => {
     chrome.storage.local.get([key], function (result) {
@@ -18,6 +20,19 @@ async function httpGet(url) {
   return await fetch(url, {method: 'GET'});
 }
 
+async function initBilibili() {
+  let userInfoBilibili = await httpGet('https://web-api.hypergryph.com/account/info/ak-b')
+  if (userInfoBilibili.status === 200) {
+    let json = await userInfoBilibili.json();
+    tokenB = json.data.content;
+    loggedB = true;
+    console.log(`tokenB: ${tokenB}`);
+  } else {
+    loggedB = false;
+  }
+  initializedB = true;
+}
+
 async function init() {
   let userInfo = await httpGet(`https://as.hypergryph.com/user/info/v1/token_by_cookie`);
   if (userInfo.status === 200) {
@@ -28,15 +43,14 @@ async function init() {
   } else {
     logged = false;
   }
-
   initialized = true;
 }
 
-async function getData() {
+async function getData(_token, channelId = null) {
   let dataset = [];
   let max = 1;
   for (let i = 1; i <= max; i++) {
-    let data = await httpGet(`https://ak.hypergryph.com/user/api/inquiry/gacha?page=${i}&token=${encodeURIComponent(token)}`);
+    let data = await httpGet(`https://ak.hypergryph.com/user/api/inquiry/gacha?page=${i}&token=${encodeURIComponent(_token)}${channelId ? `&channelId=${channelId}` : ''}`);
     let json = await data.json();
     if (json.code === 3000) {
       return false;
@@ -70,8 +84,8 @@ function checkStructure(data) {
   return true;
 }
 
-async function mergeData(data) {
-  let local = await readLocalStorage("ArknightsCardInformation");
+async function mergeData(data, key = "ArknightsCardInformation") {
+  let local = await readLocalStorage(key);
   let changed = 0;
   if (checkStructure(local)) {
     let arrayTimestamp = [];
@@ -103,11 +117,11 @@ function parseData(dataset) {
   return results;
 }
 
-function getUpdate(count) {
+function getUpdate(count, bilibili) {
   chrome.notifications.create('DataUpdate', {
     type: 'basic',
     iconUrl: '/icons/icon-128x128.png',
-    title: '有新的抽卡数据更新, 更新了' + count + '条数据',
+    title: (bilibili ? 'B服数据:' : '') + '有新的抽卡数据更新, 更新了' + count + '条数据',
     message: '抽卡数据已更新，请刷新页面查看',
     priority: 2
   })
@@ -115,10 +129,11 @@ function getUpdate(count) {
 
 async function main() {
   await init();
+  await initBilibili();
   if (logged) {
     chrome.storage.local.set({"login": true}, () => {
     });
-    let result = await getData();
+    let result = await getData(token);
     if (result === false) {
       console.log('login failed');
     } else {
@@ -142,6 +157,35 @@ async function main() {
     }
   } else {
     chrome.storage.local.set({"login": false}, () => {
+    });
+  }
+  if (loggedB) {
+    chrome.storage.local.set({"loginB": true}, () => {
+    });
+    let result = await getData(tokenB, 2);
+    if (result === false) {
+      console.log('login failed');
+    } else {
+      let parsed = parseData(result.data);
+      let merged = await mergeData(parsed, "ArknightsCardInformationB");
+      let mergedData = merged[0];
+      let changed = merged[1];
+      if (changed > 0) {
+        getUpdate(changed);
+      }
+      chrome.storage.local.set({"ArknightsCardInformationB": mergedData}, () => {
+      });
+      pools = [];
+      mergedData.forEach(item => {
+        if (!pools.includes(item.pool)) {
+          pools.push(item.pool);
+        }
+      });
+      chrome.storage.local.set({"poolsB": pools}, () => {
+      });
+    }
+  } else {
+    chrome.storage.local.set({"loginB": false}, () => {
     });
   }
 }
