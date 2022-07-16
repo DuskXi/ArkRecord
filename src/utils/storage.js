@@ -19,4 +19,4 @@ async function writeLocalStorage(key, value) {
 }
 
 
-export { readLocalStorage, writeLocalStorage };
+export {readLocalStorage, writeLocalStorage};
