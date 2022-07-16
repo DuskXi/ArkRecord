@@ -114,7 +114,15 @@ export default {
     updateInfoOptions: [],
     updateInfoLoading: false,
     versionType: "dev"
-  })
+  }),
+  watch:{
+    "updateInfoChoose": function (val) {
+      if (this.customDialogModel) {
+        this.customDialogModel = false;
+        setTimeout(() => this.customDialogModel = true, 150);
+      }
+    }
+  }
 }
 </script>
 
