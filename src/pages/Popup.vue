@@ -1,6 +1,8 @@
 <template>
   <q-page class="flex flex-center">
-    <q-btn style="margin-top:20px;margin-bottom:20px;" color="primary" icon="info" label="查看详细数据" @click="gotoInformationPage"/>
+    <q-btn style="margin-top:20px;margin-bottom:20px;" color="primary" icon="info" label="查看详细数据" @click="gotoInformationPage">
+      <q-badge color="orange" v-if="hasNew">有更新！</q-badge>
+    </q-btn>
     <q-markup-table>
       <thead>
       <tr>
@@ -19,6 +21,10 @@
       </tr>
       </tbody>
     </q-markup-table>
+    <div class="q-gutter-sm">
+      <q-badge :color="loginO?'green':'orange'">官服: {{ loginO ? '已' : '未' }}登录</q-badge>
+      <q-badge :color="loginB?'green':'orange'">B服: {{ loginB ? '已' : '未' }}登录</q-badge>
+    </div>
     <div class="text-h6 vertical-middle" style="color: red; margin-top: 20px;margin-bottom: 20px;" v-if="!login">鹰角网站未登录</div>
     <q-btn color="primary" style="margin-top: 20px; margin-bottom: 20px;" v-if="!login" label="点击刷新数据" @click="update"/>
   </q-page>
@@ -27,15 +33,14 @@
 <script>
 
 import {defineComponent} from "vue";
-import {Dialog} from 'quasar'
+import {Dialog, Notify} from 'quasar'
 import {useQuasar} from 'quasar'
-import async from "async";
 
 const readLocalStorage = async (key) => {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get([key], function (result) {
       if (result[key] === undefined) {
-        resolve([]);
+        resolve(null);
       } else {
         resolve(result[key]);
       }
@@ -49,8 +54,18 @@ export default defineComponent({
     show: "Quasar",
     totalInfos: [],
     login: false,
+    loginO: false,
+    loginB: false,
+    hasNew: false,
   }),
   methods: {
+    async loginCheck() {
+      let loginO = await readLocalStorage("login");
+      let loginB = await readLocalStorage("loginB");
+      this.loginO = loginO;
+      this.loginB = loginB;
+      this.login = loginO || loginB;
+    },
     gotoInformationPage() {
       let newURL = "www/index.html#/";
       chrome.tabs.create({url: newURL});
@@ -148,16 +163,15 @@ export default defineComponent({
         }
       };
     },
-    async checkLogin() {
-      this.login = await readLocalStorage("login");
-    },
     async update() {
       chrome.runtime.sendMessage({Type: "refresh"}, function (response) {
         location.reload();
       });
     }
   },
-  mounted() {
+  async mounted() {
+    chrome.runtime.sendMessage({Type: "refresh"}, function (_) {
+    });
     chrome.runtime.onMessage.addListener(
       function (request, sender, sendResponse) {
         if (request.hasOwnProperty("message")) {
@@ -168,8 +182,11 @@ export default defineComponent({
       }
     );
     console.log("mounted");
-    this.updateInformation();
-    this.checkLogin();
+    await this.updateInformation();
+    await this.loginCheck();
+    let last_version = await readLocalStorage("lastversion")
+    console.log(last_version);
+    this.hasNew = (await readLocalStorage("indexVisited")) !== true || last_version === null;
   }
 })
 ;
