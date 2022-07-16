@@ -102,7 +102,7 @@ class Pool {
   }
 }
 
-class TotalData {
+export class TotalData {
   constructor() {
     this.records = [];
     this.star3 = [];
@@ -231,6 +231,7 @@ function calculateStatisticalInfo(records, totalLength, type) {
 
 function loadPools(rawData, allowStandardPool = true) {
   let pools = {};
+  if (rawData == null) return pools;
   rawData.forEach(element => {
     if (allowStandardPool || element["pool"] !== "常驻标准寻访") {
       let poolName = element["pool"];
