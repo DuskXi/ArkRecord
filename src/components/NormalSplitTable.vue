@@ -56,7 +56,7 @@ export default {
   name: "NormalSplitTable",
   methods: {
     async loadData() {
-      let rawData = await readLocalStorage("ArknightsCardInformation");
+      let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
       this.poolsDict = loadPools(rawData, this.allowStandardPool);
       this.pools = Object.values(this.poolsDict);
       this.totalPool = buildTotalData(this.pools);
@@ -117,7 +117,12 @@ export default {
       deep: true
     },
   },
-  props: {},
+  props: {
+    bilibili: {
+      type: Boolean,
+      default: false
+    },
+  },
   data: () => ({
     shownTab: "",
     pools: [],
