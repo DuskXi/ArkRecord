@@ -47,7 +47,7 @@ export default {
   name: "PoolsTable",
   methods: {
     async loadData() {
-      let rawData = await readLocalStorage("ArknightsCardInformation");
+      let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
       this.poolsDict = loadPools(rawData, this.allowStandardPool);
       this.pools = Object.values(this.poolsDict);
       this.pools.sort((a, b) => {
@@ -69,6 +69,10 @@ export default {
     }
   },
   props: {
+    bilibili: {
+      type: Boolean,
+      default: false
+    }
   },
   data: () => ({
     shownTab: "",

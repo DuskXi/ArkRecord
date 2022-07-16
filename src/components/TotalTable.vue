@@ -3,8 +3,6 @@
 
   <div class="q-gutter-sm">
     <q-toggle v-model="enableDetailsCount" label="显示详细统计"/>
-  </div>
-  <div class="q-gutter-sm">
     <q-toggle v-model="enableDateLimiter" label="启用时间限制"/>
   </div>
   <div class="q-pa-md" v-if="enableDateLimiter">
@@ -71,7 +69,7 @@ export default {
       }
     },
     async loadData() {
-      let rawData = await readLocalStorage("ArknightsCardInformation");
+      let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
       if (this.enableDateLimiter)
         rawData = filterInTime(rawData, this.start, this.end);
       this.poolsDict = loadPools(rawData);
@@ -104,6 +102,12 @@ export default {
     enableDateLimiter: function (val) {
       if (!val)
         this.loadData();
+    }
+  },
+  props: {
+    bilibili: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
