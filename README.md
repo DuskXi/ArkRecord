@@ -50,4 +50,13 @@ quasar build -m bex
 
 ---
 
+## 预览
+
+<img width="1910" alt="屏幕截图 2022-07-16 180942~1" src="https://user-images.githubusercontent.com/84715902/179365966-821e9162-ea31-46c8-b3a4-7bbe41cef07b.png">
+<img width="1915" alt="屏幕截图 2022-07-16 181035~1" src="https://user-images.githubusercontent.com/84715902/179365968-766747b3-3194-44e0-a475-bb105bf1ac9c.png">
+<img width="1904" alt="屏幕截图 2022-07-16 181111~1" src="https://user-images.githubusercontent.com/84715902/179365973-7d9bfb7a-5934-4a7f-836f-88332058f8f3.png">
+<img width="1898" alt="屏幕截图 2022-07-16 181137~1" src="https://user-images.githubusercontent.com/84715902/179365998-d949711c-5606-489c-94ff-6731b88db7f3.png">
+<img width="1910" alt="屏幕截图 2022-07-16 182733~1" src="https://user-images.githubusercontent.com/84715902/179366000-b6b9775a-698c-421b-a65d-87a5a9165a32.png">
+
+
 背景出处: https://www.pixiv.net/artworks/95185823
