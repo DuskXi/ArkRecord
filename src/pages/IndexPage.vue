@@ -44,7 +44,7 @@
 
 <script>
 import config from '../../package.json';
-import { loadPools} from '../utils/data';
+import {loadPools} from '../utils/data';
 import {readLocalStorage} from '../utils/storage';
 import {defineComponent} from "vue";
 import ChartShow from "components/ChartShow.vue";
