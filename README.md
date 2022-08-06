@@ -1,4 +1,15 @@
-# Quasar App (arkrecord)
+# ArkRecord (Base on Quasar)
+
+## 下个大版本更新时的更新列表(TODO List):
+
+- [ ] 显示和可导出源石/充值记录
+- [ ] 完善统计学分析页面
+- [ ] 在`全部列出`和`纯常驻寻访`中增加图表选项
+- [ ] 重构 **background.js** 提高可读性
+- [ ] 提供卡池时间线展示
+- [ ] 加入对PRTS卡池页面的爬虫，确保完美分类分割常驻标准寻访 **(要是他们有API了请在Issue或者B站私信里敲我)**
+
+---
 
 ***详细使用方法在这里 [Blog](https://duskxi.github.io/2022/03/16/ArkRecord/)***
 
