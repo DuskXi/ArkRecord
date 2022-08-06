@@ -176,6 +176,8 @@ export default {
         return ["非酋", "text-blue-grey-9"]
       else if (luckyRate < -0.9)
         return ["非洲皇帝", "text-blue-grey-10"]
+      else
+        return ["无数据", "text-blue-grey-10"]
     }
   },
   async mounted() {
