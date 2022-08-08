@@ -23,7 +23,7 @@
   </div>
   <div class="q-gutter-sm">
     <q-toggle v-model="allowStandardPool" label="允许统计标准寻访"/>
-    <q-checkbox v-for="(value, name, index) in poolsLimiter" :label="name" v-model="poolsLimiter[name]" :key="index" color="orange"/>
+    <q-checkbox v-for="(_value, name, index) in poolsLimiter" :label="name" v-model="poolsLimiter[name]" :key="index" color="orange"/>
   </div>
   <div class="row">
     <div class="items-center">
