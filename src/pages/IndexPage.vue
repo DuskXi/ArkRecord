@@ -54,7 +54,7 @@ import NormalSplitTable from "components/tabs/NormalSplitTable.vue";
 import StatisticsAnalyze from "components/tabs/StatisticsAnalyze.vue";
 import ScreenShot from "components/functional/ScreenShot.vue";
 import DataManager from "components/functional/DataManager.vue";
-import InformationSet from "components/InformationSet.vue";
+import InformationSet from "components/functional/InformationSet.vue";
 
 export default defineComponent({
   name: "IndexPage",
