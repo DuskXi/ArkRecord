@@ -5,7 +5,7 @@
 
         <div class="text-h3 vertical-middle	">ArkRecord Dev页</div>
         <div class="text-h5 vertical-middle	">爬虫数据:</div>
-        <q-btn color="primary" label="执行" @click="loadPRTSData"/>
+        <poolsSchedule v-model:schedule="schedule"></poolsSchedule>
       </div>
     </div>
   </q-page>
@@ -13,26 +13,23 @@
 
 <script>
 import config from '../../package.json';
-import {api} from "boot/axios";
-import {parsePRTSHtml, getPoolsSchedule} from "../utils/NormalPoolsSchedule";
+import PoolsSchedule from "components/functional/PoolsSchedule.vue";
 
 export default {
   name: "TestPages",
+  components: {
+    poolsSchedule: PoolsSchedule,
+  },
   data: () => ({
     version: config.version,
-    startYear: 2019
+    schedule: []
   }),
-  methods: {
-    async loadPRTSData() {
-      let currentYear = new Date().getFullYear();
-      let results = [];
-      for (let i = this.startYear; i <= currentYear; i++) {
-        let result = getPoolsSchedule(i);
-        results = results.concat(result);
-      }
-      return results;
+  methods: {},
+  watch: {
+    'schedule': function (val) {
+      console.log(val);
     }
-  },
+  }
 }
 </script>
 
