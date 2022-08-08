@@ -17,7 +17,7 @@
     <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
       <q-tab v-for="(pool, index) in splitPools" :key="index" :name="pool.name" :label="pool.name">
         <q-tooltip>
-          {{ ranges[index] }}
+          {{ ranges[index][0].toLocaleString() }} - {{ ranges[index][1].toLocaleString() }}
         </q-tooltip>
       </q-tab>
     </q-tabs>
@@ -27,7 +27,7 @@
         <div class="q-gutter-sm">
           <q-img :src="imageUrls[index]" spinner-color="white" style=" max-width: 350px" fit="scale-down" v-if="schedule.length > 0"/>
         </div>
-        <div class="text-h6">样本数量: {{ pool.records.length }}</div>
+        <div class="text-h5">样本数量: {{ pool.records.length }}</div>
         <q-markup-table style="background-color: rgba(255,255,255, 0.6)">
           <thead>
           <tr>
