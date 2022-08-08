@@ -1,5 +1,6 @@
 <template>
-  <div class="q-gutter-sm">
+  <poolsSchedule v-model:schedule="schedule"></poolsSchedule>
+  <div class="q-gutter-sm" v-if="schedule.length <= 0">
     <div class="text-h6 vertical-middle	">合并统计(自动合并勾选的相邻选项) :</div>
     <q-checkbox v-for="(pool, index) in rawSplitPools" :label="pool.name" v-model="mergeOptions[pool.name]" :key="index" color="orange">
       <q-tooltip v-if="enableDetailsCheckBox">
@@ -14,11 +15,18 @@
   </div>
   <q-card style="background-color: rgba(255,255,255, 0.4)">
     <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
-      <q-tab v-for="(pool, index) in splitPools" :key="index" :name="pool.name" :label="pool.name"/>
+      <q-tab v-for="(pool, index) in splitPools" :key="index" :name="pool.name" :label="pool.name">
+        <q-tooltip>
+          {{ ranges[index] }}
+        </q-tooltip>
+      </q-tab>
     </q-tabs>
     <q-separator/>
     <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)" animated>
       <q-tab-panel v-for="(pool, index) in splitPools" :key="index" :name="pool.name">
+        <div class="q-gutter-sm">
+          <q-img :src="imageUrls[index]" spinner-color="white" style=" max-width: 350px" fit="scale-down" v-if="schedule.length > 0"/>
+        </div>
         <div class="text-h6">样本数量: {{ pool.records.length }}</div>
         <q-markup-table style="background-color: rgba(255,255,255, 0.6)">
           <thead>
@@ -50,10 +58,14 @@
 
 <script>
 import {readLocalStorage} from "src/utils/storage";
-import {buildTotalData, loadPools, splitNormalPools, mergePools} from "src/utils/data";
+import {buildTotalData, loadPools, splitNormalPools, mergePools, splitNormalPoolsBySchedule} from "src/utils/data";
+import PoolsSchedule from "components/functional/PoolsSchedule.vue";
 
 export default {
   name: "NormalSplitTable",
+  components: {
+    poolsSchedule: PoolsSchedule,
+  },
   methods: {
     async loadData() {
       let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
@@ -65,10 +77,10 @@ export default {
       this.rawSplitPools.forEach(pool => {
         this.mergeOptions[pool.name] = false;
       });
-      this.splitPools = this.rawSplitPools;
       this.pools.sort((a, b) => {
         return b.getLastUpdate() - a.getLastUpdate();
       });
+      this.splitPools = this.rawSplitPools;
     },
     rebuildSpiltPools() {
       let newSplitPools = [];
@@ -98,7 +110,7 @@ export default {
         i++;
       }
       this.splitPools = newSplitPools;
-    }
+    },
   },
   async mounted() {
     await this.loadData();
@@ -116,6 +128,18 @@ export default {
       },
       deep: true
     },
+    schedule: {
+      handler() {
+        let result = splitNormalPoolsBySchedule(this.totalPool, this.schedule);
+        this.splitPools = result.pools;
+        this.imageUrls = result.imagesUrls;
+        this.ranges = result.range;
+        if (this.splitPools.length > 0) {
+          this.shownTab = this.splitPools[0].name;
+        }
+      },
+      deep: true
+    }
   },
   props: {
     bilibili: {
@@ -134,6 +158,9 @@ export default {
     shownTabKey: new Date().getTime(),
     enableDetailsCount: true,
     enableDetailsCheckBox: false,
+    schedule: [],
+    imageUrls: [],
+    ranges: [],
   })
 }
 </script>

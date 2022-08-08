@@ -294,6 +294,36 @@ function splitNormalPools(totalPool) {
 
 /**
  *
+ * @param {TotalData} totalPool
+ * @param {Array} schedule
+ */
+function splitNormalPoolsBySchedule(totalPool, schedule) {
+  let pools = [];
+  let imagesUrls = [];
+  let range = [];
+  let index = 0;
+  totalPool.sortUp();
+  schedule.forEach(element => {
+    index++;
+    let start = new Date(element.start);
+    let end = new Date(element.end);
+    let pool = new Pool(`第${index}寻访池`);
+    totalPool.records.forEach(record => {
+      if (record.timestamp >= start.getTime() && record.timestamp <= end.getTime() && record.pool === "常驻标准寻访")
+        pool.add(record);
+    })
+    if (pool.records.length > 0) {
+      pools.push(pool);
+      imagesUrls.push(element.imageUrl);
+      range.push([start, end]);
+    }
+
+  });
+  return {pools: pools, imagesUrls: imagesUrls, range: range};
+}
+
+/**
+ *
  * @param { Pool[] } pools
  * @param { string } name
  */
@@ -321,4 +351,4 @@ function buildTotalData(pools) {
   return totalData;
 }
 
-export {Record, Pool, StatisticalInformation, loadPools, buildTotalData, filterInTime, splitNormalPools, mergePools};
+export {Record, Pool, StatisticalInformation, loadPools, buildTotalData, filterInTime, splitNormalPools, mergePools, splitNormalPoolsBySchedule};

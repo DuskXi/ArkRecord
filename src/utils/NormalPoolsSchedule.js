@@ -13,7 +13,7 @@ async function getPoolsSchedule(year) {
         let htmlText = response.data["parse"]["text"]["*"];
         let result = parsePRTSHtml(htmlText);
         result.forEach(element => {
-          let regResult = /(\d{4}-[01]\d-[0-3]\d\x20[0-2]\d:[0-5]\d(:[0-5]\d)*(?:\.\d+)?Z?)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d(:[0-5]\d)*(?:\.\d+)?Z?)/gm.exec(element[0]);
+          let regResult = element[0].match(/(\d{4}-[01]\d-[0-3]\d\x20[0-2]\d:[0-5]\d(:[0-5]\d)*(?:\.\d+)?Z?)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d(:[0-5]\d)*(?:\.\d+)?Z?)/gm);
           if (regResult != null && regResult.length > 1) {
             let start = new Date(Date.parse(regResult[0]) - timeZoneOffset);
             let end = new Date(Date.parse(regResult[1]) - timeZoneOffset);
@@ -45,7 +45,7 @@ function parsePRTSHtml(htmlText) {
           finalString += " " + child.data;
         }
       })
-      result.push([finalString, "https://prts.wiki"+imageUrls[imageUrls.length - 1]]);
+      result.push([finalString, "https://prts.wiki" + imageUrls[imageUrls.length - 1]]);
     }
   });
   return result;
