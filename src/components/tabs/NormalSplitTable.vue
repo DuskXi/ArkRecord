@@ -11,7 +11,8 @@
   </div>
   <div class="q-gutter-sm">
     <q-toggle v-model="enableDetailsCount" label="显示详细统计"/>
-    <q-toggle v-model="enableDetailsCheckBox" label="复选框悬停预览"/>
+    <q-toggle v-model="enableDetailsCheckBox" label="复选框悬停预览" v-if="schedule.length <= 0"/>
+    <q-toggle v-model="enableImage" label="显示卡池图片" v-if="schedule.length > 0"/>
   </div>
   <q-card style="background-color: rgba(255,255,255, 0.4)">
     <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
@@ -24,7 +25,7 @@
     <q-separator/>
     <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)" animated>
       <q-tab-panel v-for="(pool, index) in splitPools" :key="index" :name="pool.name">
-        <div class="q-gutter-sm">
+        <div class="q-gutter-sm" v-if="enableImage">
           <q-img :src="imageUrls[index]" spinner-color="white" style=" max-width: 350px" fit="scale-down" v-if="schedule.length > 0"/>
         </div>
         <div class="text-h5">样本数量: {{ pool.records.length }}</div>
@@ -134,6 +135,7 @@ export default {
         this.splitPools = result.pools;
         this.imageUrls = result.imagesUrls;
         this.ranges = result.range;
+        this.enableImage = true;
         if (this.splitPools.length > 0) {
           this.shownTab = this.splitPools[0].name;
         }
@@ -161,6 +163,7 @@ export default {
     schedule: [],
     imageUrls: [],
     ranges: [],
+    enableImage: false,
   })
 }
 </script>
