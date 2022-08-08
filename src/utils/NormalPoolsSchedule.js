@@ -13,13 +13,14 @@ async function getPoolsSchedule(year) {
         let htmlText = response.data["parse"]["text"]["*"];
         let result = parsePRTSHtml(htmlText);
         result.forEach(element => {
-          let regResult = /(\d{4}-[01]\d-[0-3]\d\x20[0-2]\d:[0-5]\d(:[0-5]\d)*(?:\.\d+)?Z?)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d(:[0-5]\d)*(?:\.\d+)?Z?)/gm.exec(element);
+          let regResult = /(\d{4}-[01]\d-[0-3]\d\x20[0-2]\d:[0-5]\d(:[0-5]\d)*(?:\.\d+)?Z?)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d(:[0-5]\d)*(?:\.\d+)?Z?)/gm.exec(element[0]);
           if (regResult != null && regResult.length > 1) {
             let start = new Date(Date.parse(regResult[0]) - timeZoneOffset);
             let end = new Date(Date.parse(regResult[1]) - timeZoneOffset);
             results.push({
-              start: start,
-              end: end
+              start: start.toUTCString(),
+              end: end.toUTCString(),
+              imageUrl: element[1]
             });
           }
         });
@@ -36,13 +37,15 @@ function parsePRTSHtml(htmlText) {
   trList.each((index, tr) => {
     if (index !== 0) {
       let tdList = $(tr).find('td');
+      let imageUrl = tdList.eq(1).find('img').attr('srcset');
+      let imageUrls = imageUrl.match(/(\/[-a-zA-Z0-9@:%_+.~#?&/=]+)/g)
       let finalString = '';
       tdList[2].children.forEach((child) => {
         if (child.type === "text") {
           finalString += " " + child.data;
         }
       })
-      result.push(finalString);
+      result.push([finalString, "https://prts.wiki"+imageUrls[imageUrls.length - 1]]);
     }
   });
   return result;
