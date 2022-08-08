@@ -5,11 +5,11 @@
   </div>
   <q-card style="background-color: rgba(255,255,255, 0.4)">
     <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
-      <q-tab v-for="(pool, index) in pools" :key="index" :name="pool.name" :label="pool.name"/>
+      <q-tab v-for="(pool, index) in pools" :key="index" :name="index" :label="pool.name"/>
     </q-tabs>
     <q-separator/>
     <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)" animated>
-      <q-tab-panel v-for="(pool, index) in pools" :key="index" :name="pool.name">
+      <q-tab-panel v-for="(pool, index) in pools" :key="index" :name="index">
         <div class="text-h6">样本数量: {{ pool.records.length }}</div>
         <q-markup-table style="background-color: rgba(255,255,255, 0.6)">
           <thead>
@@ -37,14 +37,19 @@
       </q-tab-panel>
     </q-tab-panels>
   </q-card>
+  <time-line v-if="shownTab < pools.length" :pool="pools[shownTab]"/>
 </template>
 
 <script>
 import {readLocalStorage} from "src/utils/storage";
 import {loadPools} from "src/utils/data";
+import TimeLine from "components/functional/TimeLine.vue";
 
 export default {
   name: "PoolsTable",
+  components: {
+    TimeLine,
+  },
   methods: {
     async loadData() {
       let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
@@ -58,14 +63,14 @@ export default {
   async mounted() {
     await this.loadData();
     if (this.pools.length > 0) {
-      this.shownTab = this.pools[0].name;
+      this.shownTab = 0; //this.pools[0].name;
     }
   },
-  watch:{
-    allowStandardPool:async function(val) {
+  watch: {
+    allowStandardPool: async function (val) {
       await this.loadData();
       if (!val && this.shownTab === "常驻标准寻访")
-        this.shownTab = this.pools[0].name;
+        this.shownTab = 0;//this.pools[0].name;
     }
   },
   props: {
@@ -75,7 +80,7 @@ export default {
     }
   },
   data: () => ({
-    shownTab: "",
+    shownTab: 0,
     pools: [],
     poolsDict: {},
     allowStandardPool: false,
