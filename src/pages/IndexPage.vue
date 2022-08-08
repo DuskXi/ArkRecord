@@ -52,7 +52,7 @@ import PoolsTable from "components/PoolsTable.vue";
 import TotalTable from "components/TotalTable.vue";
 import NormalSplitTable from "components/NormalSplitTable.vue";
 import StatisticsAnalyze from "components/StatisticsAnalyze.vue";
-import ScreenShot from "components/ScreenShot.vue";
+import ScreenShot from "components/functional/ScreenShot.vue";
 import DataManager from "components/DataManager.vue";
 import InformationSet from "components/InformationSet.vue";
 
