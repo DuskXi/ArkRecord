@@ -53,4 +53,13 @@ export default defineComponent({
 ::-webkit-scrollbar-thumb:vertical:hover, ::-webkit-scrollbar-thumb:horizontal:hover {
   background-color: #808080;
 }
+
+body {
+  background: url(/www/background.jpg) no-repeat center fixed;
+  background-size: cover;
+}
+
+.mainBody {
+  background-color: rgba(255, 255, 255, 0.65);
+}
 </style>

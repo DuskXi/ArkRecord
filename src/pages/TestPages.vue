@@ -37,12 +37,5 @@ export default {
 </script>
 
 <style>
-body {
-  background: url(/www/background.jpg) no-repeat center fixed;
-  background-size: cover;
-}
 
-.mainBody {
-  background-color: rgba(255, 255, 255, 0.65);
-}
 </style>
