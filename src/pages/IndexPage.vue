@@ -57,7 +57,7 @@ import DataManager from "components/functional/DataManager.vue";
 import InformationSet from "components/InformationSet.vue";
 
 export default defineComponent({
-  name: "TestPage",
+  name: "IndexPage",
   components: {
     chartShow: ChartShow,
     poolsTable: PoolsTable,
