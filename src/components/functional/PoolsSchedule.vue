@@ -1,8 +1,10 @@
 <template>
 
-  <q-btn color="secondary" label="从PRTS获取数据" @click="loadSchedule" v-if="waitData.length > 0"></q-btn>
-  <div class="text-h6 vertical-middle">缓存卡池时间数据: {{ countPools }} 个卡池</div>
+  <q-btn color="secondary" label="从PRTS获取数据" @click="loadSchedule" v-if="waitData.length > 0 || outOfRange"></q-btn>
+  <div class="text-h5 vertical-middle">缓存卡池时间数据: {{ countPools }} 个卡池</div>
   <div class="q-gutter-sm">
+
+    <q-badge color="orange" v-if="outOfRange">当前时间已经超过最新卡池的结束时间，可能有更新</q-badge>
     <q-badge color="blue" v-for="(value, index) in poolsScheduleYears" :key="index">{{ value }}</q-badge>
     <q-badge color="red" v-for="(value, index) in waitData" :key="index">{{ value }}未拉取数据</q-badge>
     数据来源: <a href="https://prts.wiki/w/卡池一览/常驻标准寻访" class="doc-link">prts.wiki
@@ -34,11 +36,14 @@ export default {
         cachedYears = [];
       } else {
         results = await readLocalStorage("PoolsSchedule");
-        this.poolsScheduleYears = cachedYears.map(year => year);
+        this.poolsScheduleYears = []
+        cachedYears.forEach(year => {
+          this.poolsScheduleYears.push(year);
+        });
         occupiedDate = results.map(result => result.start);
       }
       for (let i = this.startYear; i <= currentYear; i++)
-        if (!cachedYears.includes(i)) {
+        if (!cachedYears.includes(i) || i === currentYear) {
           let result = await getPoolsSchedule(i);
           result.forEach(item => {
             if (!occupiedDate.includes(item.start)) {
@@ -54,23 +59,30 @@ export default {
         }
       this.scheduleUpdate = results;
       this.poolsScheduleYears.sort((a, b) => a - b);
+      results.sort((a, b) => new Date(a.start) - new Date(b.start));
       this.countPools = results.length;
-      await writeLocalStorage("PoolsScheduleYears", this.poolsScheduleYears);
+      await writeLocalStorage("PoolsScheduleYears", [].concat(this.poolsScheduleYears));
       await writeLocalStorage("PoolsSchedule", results);
+      let end = new Date(results[results.length - 1].end);
+      this.outOfRange = end < new Date();
       this.loading = false;
     },
   },
   async mounted() {
     let currentYear = new Date().getFullYear();
     let cachedYears = await readLocalStorage("PoolsScheduleYears");
+    let poolsSchedule = await readLocalStorage("PoolsSchedule");
     if (cachedYears != null) {
-      this.poolsScheduleYears = await readLocalStorage("PoolsScheduleYears");
-      this.countPools = (await readLocalStorage("PoolsSchedule")).length;
+      this.poolsScheduleYears = [].concat(await readLocalStorage("PoolsScheduleYears"));
+      this.countPools = poolsSchedule.length;
+      this.scheduleUpdate = poolsSchedule;
     }
     for (let i = this.startYear; i <= currentYear; i++)
       if (!this.poolsScheduleYears.includes(i)) {
         this.waitData.push(i);
       }
+    let end = new Date(poolsSchedule[poolsSchedule.length - 1].end);
+    this.outOfRange = end < new Date();
   },
   emits: ['update:schedule'],
   props: {
@@ -86,6 +98,7 @@ export default {
     poolsScheduleYears: [],
     countPools: 0,
     waitData: [],
+    outOfRange: false,
   }),
   setup(props, {emit}) {
     const scheduleUpdate = computed({
