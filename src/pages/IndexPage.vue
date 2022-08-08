@@ -47,13 +47,13 @@ import config from '../../package.json';
 import {loadPools} from '../utils/data';
 import {readLocalStorage} from '../utils/storage';
 import {defineComponent} from "vue";
-import ChartShow from "components/ChartShow.vue";
-import PoolsTable from "components/PoolsTable.vue";
-import TotalTable from "components/TotalTable.vue";
-import NormalSplitTable from "components/NormalSplitTable.vue";
-import StatisticsAnalyze from "components/StatisticsAnalyze.vue";
+import ChartShow from "components/tabs/ChartShow.vue";
+import PoolsTable from "components/tabs/PoolsTable.vue";
+import TotalTable from "components/tabs/TotalTable.vue";
+import NormalSplitTable from "components/tabs/NormalSplitTable.vue";
+import StatisticsAnalyze from "components/tabs/StatisticsAnalyze.vue";
 import ScreenShot from "components/functional/ScreenShot.vue";
-import DataManager from "components/DataManager.vue";
+import DataManager from "components/functional/DataManager.vue";
 import InformationSet from "components/InformationSet.vue";
 
 export default defineComponent({

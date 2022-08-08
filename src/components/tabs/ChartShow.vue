@@ -22,9 +22,9 @@
 <script>
 import {readLocalStorage} from "src/utils/storage";
 import {loadPools} from "src/utils/data";
-import LineChart from "components/LineChart.vue";
-import BarChart from "components/BarChart.vue";
-import LimitedPieChart from "components/LimitedPieChart.vue";
+import LineChart from "components/charts/LineChart.vue";
+import BarChart from "components/charts/BarChart.vue";
+import LimitedPieChart from "components/charts/LimitedPieChart.vue";
 
 var details;
 
