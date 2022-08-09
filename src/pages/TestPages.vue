@@ -27,8 +27,8 @@ export default {
     schedule: []
   }),
   methods: {
-    test() {
-      syncCharactersInformation();
+    async test() {
+      console.log(await syncCharactersInformation());
     }
   },
   watch: {
