@@ -11,6 +11,13 @@
   - [X] 核心组件
 - [ ] 适配手机竖屏UI（当前在手机上的横屏UI没有问题）
 
+### 开发中版本预览:
+
+时间线/PRTS数据分割标准寻访:
+
+![image](https://user-images.githubusercontent.com/84715902/183721638-0b5ab947-7895-4ea4-82e5-afd6b33a0e82.png)
+
+
 ---
 
 ***详细使用方法在这里 [Blog](https://duskxi.github.io/2022/03/16/ArkRecord/)***
