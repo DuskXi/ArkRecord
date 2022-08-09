@@ -11,7 +11,7 @@
     <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)" animated>
       <q-tab-panel v-for="(pool, index) in pools" :key="index" :name="index">
         <div class="text-h6">样本数量: {{ pool.records.length }}</div>
-        <q-markup-table style="background-color: rgba(255,255,255, 0.6)">
+        <q-markup-table style="background-color: rgba(255,255,255, 0.0)" class="no-box-shadow">
           <thead>
           <tr>
             <th class="text-center">干员类型</th>

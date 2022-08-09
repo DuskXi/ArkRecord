@@ -4,6 +4,7 @@
   <div class="q-gutter-sm">
     <q-toggle v-model="enableDetailsCount" label="显示详细统计"/>
     <q-toggle v-model="enableDateLimiter" label="启用时间限制"/>
+    <q-toggle v-model="enableTimeLine" label="启用时间线"/>
   </div>
   <div class="q-pa-md" v-if="enableDateLimiter">
     <q-btn icon="event" round color="primary">
@@ -46,15 +47,21 @@
     </tr>
     </tbody>
   </q-markup-table>
+  <time-line v-if="enableTimeLine" :pool="getPool()"/>
 </template>
 
 <script>
 import {readLocalStorage} from "src/utils/storage";
 import {buildTotalData, loadPools, filterInTime} from "src/utils/data";
 import {ref} from "vue";
+import TimeLine from "components/functional/TimeLine.vue";
 
 export default {
   name: "TotalTable",
+  components: {
+    timeLine: TimeLine
+  },
+
   methods: {
     isInTimeLimiter(record) {
       if (!this.enableDateLimiter)
@@ -121,6 +128,7 @@ export default {
     dateLimiter: ref({from: new Date(), to: new Date()}),
     start: new Date(),
     end: new Date(),
+    enableTimeLine: false,
   }),
 }
 </script>

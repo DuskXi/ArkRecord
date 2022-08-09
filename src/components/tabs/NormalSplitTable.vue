@@ -16,7 +16,7 @@
   </div>
   <q-card style="background-color: rgba(255,255,255, 0.4)">
     <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
-      <q-tab v-for="(pool, index) in splitPools" :key="index" :name="pool.name" :label="pool.name">
+      <q-tab v-for="(pool, index) in splitPools" :key="index" :name="index" :label="pool.name">
         <q-tooltip>
           {{ ranges[index][0].toLocaleString() }} - {{ ranges[index][1].toLocaleString() }}
         </q-tooltip>
@@ -24,12 +24,12 @@
     </q-tabs>
     <q-separator/>
     <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)" animated>
-      <q-tab-panel v-for="(pool, index) in splitPools" :key="index" :name="pool.name">
+      <q-tab-panel v-for="(pool, index) in splitPools" :key="index" :name="index">
         <div class="q-gutter-sm" v-if="enableImage">
           <q-img :src="imageUrls[index]" spinner-color="white" style=" max-width: 350px" fit="scale-down" v-if="schedule.length > 0"/>
         </div>
         <div class="text-h5">样本数量: {{ pool.records.length }}</div>
-        <q-markup-table style="background-color: rgba(255,255,255, 0.6)">
+        <q-markup-table :grid="$q.screen.lt.md" style="background-color: rgba(255,255,255, 0.0)" class="no-box-shadow">
           <thead>
           <tr>
             <th class="text-center">干员类型</th>
@@ -55,17 +55,20 @@
       </q-tab-panel>
     </q-tab-panels>
   </q-card>
+  <time-line v-if="shownTab < splitPools.length" :pool="splitPools[shownTab]"/>
 </template>
 
 <script>
 import {readLocalStorage} from "src/utils/storage";
 import {buildTotalData, loadPools, splitNormalPools, mergePools, splitNormalPoolsBySchedule} from "src/utils/data";
 import PoolsSchedule from "components/functional/PoolsSchedule.vue";
+import TimeLine from "components/functional/TimeLine.vue";
 
 export default {
   name: "NormalSplitTable",
   components: {
     poolsSchedule: PoolsSchedule,
+    timeLine: TimeLine
   },
   methods: {
     async loadData() {
@@ -116,7 +119,7 @@ export default {
   async mounted() {
     await this.loadData();
     if (this.splitPools.length > 0) {
-      this.shownTab = this.splitPools[0].name;
+      this.shownTab = 0; //this.splitPools[0].name;
     }
   },
   watch: {
@@ -124,7 +127,7 @@ export default {
       handler() {
         this.rebuildSpiltPools();
         if (this.splitPools.length > 0 && !this.splitPools.map(pool => pool.name).includes(this.shownTab)) {
-          this.shownTab = this.splitPools[0].name;
+          this.shownTab = 0; //this.splitPools[0].name;
         }
       },
       deep: true
@@ -137,7 +140,7 @@ export default {
         this.ranges = result.range;
         this.enableImage = true;
         if (this.splitPools.length > 0) {
-          this.shownTab = this.splitPools[0].name;
+          this.shownTab = 0; //this.splitPools[0].name;
         }
       },
       deep: true
@@ -150,7 +153,7 @@ export default {
     },
   },
   data: () => ({
-    shownTab: "",
+    shownTab: 0,
     pools: [],
     poolsDict: {},
     totalPool: null,
