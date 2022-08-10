@@ -1,10 +1,12 @@
 <template>
+  <q-btn class="q-px-md" color="primary" label="刷新数据" @click="loadData"/>
   <q-table
-    title="Treats"
+    title="数据"
     :rows="rows"
     :columns="columns"
     row-key="name"
     :pagination="initialPagination"
+    style="background-color:rgba(255,255,255, 0.5); margin-top: 20px"
   >
 
     <template v-slot:header="props">
@@ -76,6 +78,7 @@ export default {
     async loadData() {
       let rawData = await readAllLocalStorage();
       this.data = rawData;
+      this.rows = [];
       this.shownData = [];
       Object.keys(rawData).forEach(key => {
         let data = JSON.stringify(rawData[key]);
