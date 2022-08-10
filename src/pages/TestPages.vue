@@ -1,12 +1,13 @@
 <template>
-  <q-page class="flex flex-center -primary mainBody">
-    <div class="column" style="width: 65%">
+  <q-page class="mainBody q-px-md" :class="$q.screen.gt.sm ? 'flex flex-center': ''">
+    <div class="row">
       <div class="col" style="margin-bottom: 20px;">
 
         <div class="text-h3 vertical-middle	">ArkRecord Dev页</div>
         <div class="text-h5 vertical-middle	">爬虫数据:</div>
-        <poolsSchedule v-model:schedule="schedule"></poolsSchedule>
-        <q-btn color="secondary" label="同步" @click="test"></q-btn>
+        <stoneAndRecharge />
+        <debugTools />
+<!--        <q-btn color="secondary" label="同步" @click="test"></q-btn>-->
       </div>
     </div>
   </q-page>
@@ -14,13 +15,15 @@
 
 <script>
 import config from '../../package.json';
-import PoolsSchedule from "components/functional/PoolsSchedule.vue";
+import DebugTools from 'components/functional/DebugTools.vue';
+import StoneAndRecharge from "components/tabs/StoneAndRecharge.vue";
 import {syncCharactersInformation} from "src/utils/CharacterInfo";
 
 export default {
   name: "TestPages",
   components: {
-    poolsSchedule: PoolsSchedule,
+    debugTools: DebugTools,
+    stoneAndRecharge: StoneAndRecharge
   },
   data: () => ({
     version: config.version,
