@@ -1,6 +1,6 @@
 <template>
 
-  <q-btn color="secondary" label="从PRTS获取数据" @click="loadSchedule" v-if="waitData.length > 0 || outOfRange" :diable="loading"></q-btn>
+  <q-btn color="secondary" label="从PRTS获取数据" @click="loadSchedule" v-if="waitData.length > 0 || outOfRange" :disable="loading"></q-btn>
   <div class="text-h5 vertical-middle">缓存卡池时间数据: {{ countPools }} 个卡池</div>
   <div class="q-gutter-sm">
 
