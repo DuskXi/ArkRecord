@@ -1,7 +1,7 @@
 <template>
   <div class="q-gutter-sm">
     <q-toggle v-model="allowStandardPool" label="允许统计标准寻访"/>
-    <q-checkbox v-for="(value, name, index) in enablePools" :label="name" v-model="enablePools[name]" :key="index" color="orange"/>
+    <q-checkbox v-for="(name, index) in Object.keys(enablePools)" :label="name" v-model="enablePools[name]" :key="index" color="orange"/>
   </div>
   <apexchart ref="bar" type="bar" :height="height" :options="chartOptions" :series="series" :key="chartKey"></apexchart>
 </template>

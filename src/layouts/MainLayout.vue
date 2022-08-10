@@ -40,17 +40,35 @@ export default defineComponent({
 
 ::-webkit-scrollbar-thumb:vertical {
   height: 12px;
-  background-color: #BDBDBD;
+  background-color: #868686;
   -webkit-border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:horizontal {
   width: 12px;
-  background-color: #BDBDBD;
+  background-color: #a7a7a7;
   -webkit-border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:vertical:hover, ::-webkit-scrollbar-thumb:horizontal:hover {
-  background-color: #808080;
+  /*background-color: #808080;*/
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-track{
+  background-color: transparent;
+}
+
+body {
+  background: url(/www/background.jpg) no-repeat center fixed;
+  background-size: cover;
+}
+
+.mainBody {
+  background-color: rgba(255, 255, 255, 0.65);
+}
+
+.mainBody {
+  background-color: rgba(255, 255, 255, 0.65);
 }
 </style>

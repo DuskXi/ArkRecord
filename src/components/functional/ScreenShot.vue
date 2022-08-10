@@ -1,4 +1,4 @@
-<template>
+<template ref="thisBody">
   <q-btn color="primary" @click="print" :label="label"/>
   <q-dialog v-model="imageShow">
     <q-card style="width: 60vw; max-width: 90vw; background-color: rgba(127,127,127,.5)">
@@ -29,14 +29,24 @@ export default {
       type: String,
       default: "点击打印页面"
     },
-    element: {
-      type: HTMLElement,
-      default: document.body
+    element: {},
+    parent:{
+      type: Boolean,
+      default: false
+    }
+  },
+  watch:{
+    element:{
+      handler(val){
+      },
+      immediate: true
     }
   },
   methods: {
     print() {
-      html2canvas(this.element).then(canvas => {
+      html2canvas(this.element != null ? this.element : document.body, {
+        useCORS: true
+      }).then(canvas => {
         this.imageDataUrl = canvas.toDataURL();
         this.imageShow = true;
         this.$q.loading.hide()

@@ -37,7 +37,7 @@
 <script>
 import {api} from "boot/axios";
 import {ref} from "vue";
-import config from '../../package.json';
+import config from '../../../package.json';
 import {readLocalStorage} from "src/utils/storage";
 
 export default {
