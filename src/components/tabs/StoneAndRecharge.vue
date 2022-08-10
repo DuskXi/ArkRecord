@@ -171,6 +171,7 @@ export default {
       if (this.displayData["源石净收入"] < 0)
         negative.push("源石净收入");
       this.negative = negative;
+      this.rowsDisplay = [];
       Object.keys(this.displayData).forEach(key => {
         this.rowsDisplay.push({key: key, value: this.displayData[key]});
       })
