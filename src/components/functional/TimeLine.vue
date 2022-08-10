@@ -18,7 +18,7 @@
   </a>
   </div>
   <div :style="mainBodyStyle">
-    <q-timeline layout="comfortable" color="secondary" id="timeline">
+    <q-timeline :layout="$q.screen.lt.sm ? 'dense' : ($q.screen.lt.md ? 'comfortable' : 'loose')" color="secondary" id="timeline">
       <q-timeline-entry v-if="pool != null" heading>
         {{ pool.name }} 时间线
       </q-timeline-entry>
