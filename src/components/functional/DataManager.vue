@@ -82,11 +82,11 @@ export default {
         let data = JSON.parse(evt.target.result);
         let success = false;
         if (data.hasOwnProperty("poolsData") && data["poolsData"] != null) {
-          await core.saveToStorage(data, false);
+          await core.saveToStorage(data.poolsData, false);
           success = true;
         }
         if (data.hasOwnProperty("poolsDataB") && data["poolsDataB"] != null) {
-          await core.saveToStorage(data, true);
+          await core.saveToStorage(data.poolsDataB, true);
           success = true;
         }
         if (!success) {
@@ -99,7 +99,7 @@ export default {
       reader.readAsText(file);
     },
     async saveToStorage(data, bilibili = false) {
-      let merged = await this.mergeData(data.poolsData, bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      let merged = await this.mergeData(data, bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
       let mergedData = merged[0];
       mergedData.sort((a, b) => b.timestamp - a.timestamp);
       let infoData = {}

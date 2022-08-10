@@ -67,4 +67,8 @@ body {
 .mainBody {
   background-color: rgba(255, 255, 255, 0.65);
 }
+
+.mainBody {
+  background-color: rgba(255, 255, 255, 0.65);
+}
 </style>
