@@ -18,5 +18,21 @@ async function writeLocalStorage(key, value) {
   });
 }
 
+async function listLocalStorageKeys() {
+  return new Promise((resolve, _) => {
+    chrome.storage.local.get(null, function (items) {
+      resolve(Object.keys(items));
+    });
+  });
+}
 
-export {readLocalStorage, writeLocalStorage};
+async function readAllLocalStorage() {
+  return new Promise((resolve, _) => {
+    chrome.storage.local.get(null, function (items) {
+      resolve(items);
+    });
+  });
+}
+
+
+export {readLocalStorage, writeLocalStorage, listLocalStorageKeys, readAllLocalStorage};
