@@ -1,6 +1,6 @@
 # ArkRecord (Base on Quasar)
 
-## 下个大版本更新时的更新-完成度列表(TODO List):
+## 完成度列表(TODO List):
 
 - [X] 显示和~~可导出~~源石/充值记录
 - [ ] 完善统计学分析页面
