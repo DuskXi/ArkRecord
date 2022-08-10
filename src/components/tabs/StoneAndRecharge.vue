@@ -2,11 +2,31 @@
   <div :class="$q.screen.lt.md?'':'row'">
     <div class="col-sm-12 col-md-6 q-pa-md">
       <q-table :title="`源石记录(${rowsStone.length}条)`" style="background-color: rgba(255,255,255,0.2)" :dense="$q.screen.lt.md"
-               :rows="rowsStone" :columns="columnsStone" row-key="name"/>
+               :rows="rowsStone" :columns="columnsStone" row-key="name">
+        <template v-slot:top-right>
+          <q-btn
+            color="primary"
+            icon-right="archive"
+            label="导出为csv"
+            no-caps
+            @click="() => exportTable(1)"
+          />
+        </template>
+      </q-table>
     </div>
     <div class="col-sm-12 col-md-6 q-pa-md">
       <q-table :title="`充值(${rowsRecharge.length}条)`" style="background-color: rgba(255,255,255,0.2)" :dense="$q.screen.lt.md"
-               :rows="rowsRecharge" :columns="columnsRecharge" row-key="name"/>
+               :rows="rowsRecharge" :columns="columnsRecharge" row-key="name">
+        <template v-slot:top-right>
+          <q-btn
+            color="primary"
+            icon-right="archive"
+            label="导出为csv"
+            no-caps
+            @click="() => exportTable(2)"
+          />
+        </template>
+      </q-table>
     </div>
   </div>
 
@@ -50,6 +70,7 @@
 import config from '../../../package.json';
 import {readLocalStorage} from "src/utils/storage";
 import {ref} from "vue";
+import {exportFile} from "quasar";
 
 let dateToString = (date) => `${date.getFullYear()}/${((date.getMonth() + 1) < 10 ? '0' : '') + (date.getMonth() + 1)}/${(date.getDate() < 10 ? '0' : '') + date.getDate()}`
 
@@ -160,6 +181,51 @@ export default {
       let to = new Date(this.timeLimiterProxy.to);
       this.timeLimiter = {from: from, to: to};
       this.generateDisplayData();
+    },
+    exportTable(type) {
+      // naive encoding to csv format
+      const content = [(type === 1 ? this.columnsStone : this.columnsRecharge).map(col => this.wrapCsvValue(col.label))].concat(
+        (type === 1 ? this.rowsStone : this.rowsRecharge).map(row => (type === 1 ? this.columnsStone : this.columnsRecharge).map(col => this.wrapCsvValue(
+          typeof col.field === 'function'
+            ? col.field(row)
+            : row[col.field === void 0 ? col.name : col.field],
+          col.format,
+          row
+        )).join(','))
+      ).join('\r\n')
+
+      const status = exportFile(
+        'table-export.csv',
+        "\uFEFF" + content,
+        'text/csv'
+      )
+
+      if (status !== true) {
+        $q.notify({
+          message: 'Browser denied file download...',
+          color: 'negative',
+          icon: 'warning'
+        })
+      }
+    },
+    wrapCsvValue(val, formatFn, row) {
+      let formatted = formatFn !== void 0
+        ? formatFn(val, row)
+        : val
+
+      formatted = formatted === void 0 || formatted === null
+        ? ''
+        : String(formatted)
+
+      formatted = formatted.split('"').join('""')
+      /**
+       * Excel accepts \n and \r in strings, but some other CSV parsers do not
+       * Uncomment the next two lines to escape new lines
+       */
+      // .split('\n').join('\\n')
+      // .split('\r').join('\\r')
+
+      return `"${formatted}"`
     }
   },
   async mounted() {
