@@ -4,10 +4,10 @@
   </div>
   <q-badge color="blue"> 总体分析:</q-badge>
   <div class="row" v-if="drawCardSets.length > 0">
-    <div class="col-1">
-      <div class="text-h5 vertical-middle"> 当前阶段:</div>
+    <div class="col-1-md col-12-sm">
+      <div class="text-h5 vertical-middle text-green-10"> 当前阶段:</div>
     </div>
-    <div class="col-11">
+    <div class="col-11-md col-12-sm">
       <div class="text-h6 vertical-middle">已经 <span style="color: red">{{ drawCardSets[drawCardSets.length - 1].records.length }}</span> 次没有出{{ analyzeMode }}了</div>
       <div class="text-h6 vertical-middle">{{ analyzeMode }}理论预期需要 <span style="color: red">{{ analyzeMode === '六星' ? expectedStar6 : expectedStar5 }}</span> 次抽出</div>
       <div class="text-h6 vertical-middle" v-if="drawCardSets[drawCardSets.length-1].records.length > (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">现在较为脸黑, 比预期值多花了 <span
@@ -21,18 +21,18 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-2">
-      <div class="text-h5 vertical-middle">欧非情况(全部数据):</div>
+    <div class="col-2-md col-12-sm">
+      <div class="text-h5 vertical-middle text-green-10">欧非情况(全部数据):</div>
     </div>
-    <div class="col-10">
+    <div class="col-10-md col-12-sm">
       <div :class="'text-h6 vertical-middle '+luckyValue[1]">{{ luckyValue[0] }}</div>
     </div>
   </div>
   <div class="row">
-    <div class="col-2">
-      <div class="text-h5 vertical-middle"> 欧非情况(近期30天数据):</div>
+    <div class="col-2-md col-12-sm">
+      <div class="text-h5 vertical-middle text-blue-grey-7"> 欧非情况(近期30天数据):</div>
     </div>
-    <div class="col-10">
+    <div class="col-10-md col-12-sm">
       <div :class="'text-h6 vertical-middle '+luckyValueRecent[1]">{{ luckyValueRecent[0] }}</div>
     </div>
   </div>
@@ -40,10 +40,10 @@
   <q-badge color="blue"> 抽卡片段分析:</q-badge>
   <q-select style="margin-top: 20px;" filled v-model="setChoose" :options="setsOptions" label="抽卡片段"/>
   <div class="row" v-if="setChoose !=null">
-    <div class="col-1">
-      <div class="text-h5 vertical-middle"> 统计学分析:</div>
+    <div class="col-1-md col-12-sm">
+      <div class="text-h5 vertical-middle text-green-7"> 统计学分析:</div>
     </div>
-    <div class="col-11">
+    <div class="col-11-md col-12-sm">
       <div class="text-h6 vertical-middle">
         在 <span style="color: red">{{ setChoose.value.records.length }}</span>
         抽中获得一个{{ analyzeMode }}这个整体事件的发生概率(二项分布)为
@@ -64,8 +64,8 @@
   <q-badge color="blue"> 卡池欧非度分析(试验):</q-badge>
   <q-select style="margin-top: 20px;" filled v-model="poolChoose" :options="poolsOptions" label="卡池选择"/>
   <div class="row" v-if="poolChoose !=null" :key="poolSummaryKey">
-    <div class="col-1"></div>
-    <div class="col-11">
+    <div class="col-1-md col-12-sm"></div>
+    <div class="col-11-md col-12-sm">
       <div class="text-h6 vertical-middle"> 总计<span style="color: red">{{ poolChoose.value.records.length }}</span>抽</div>
       <div class="text-h6 vertical-middle"> 其中六星: <span style="color: red">{{ poolChoose.value.star6.length }}</span>抽
         , 占比: <span style="color: deepskyblue">{{ (100 * poolChoose.value.star6.length / poolChoose.value.records.length).toFixed(2) }}%</span></div>
@@ -73,10 +73,10 @@
         , 占比: <span style="color: deepskyblue">{{ (100 * poolChoose.value.star5.length / poolChoose.value.records.length).toFixed(2) }}%</span></div>
 
       <div class="row">
-        <div class="col-1">
+        <div class="col-1-md col-12-sm">
           <div class="text-h6 vertical-middle"> 欧非情况:</div>
         </div>
-        <div class="col-11">
+        <div class="col-11-md col-12-sm">
           <div class="text-h6 vertical-middle"> 六星:<span :class="poolLuckyValue6[1]">{{ poolLuckyValue6[0] }}</span></div>
           <div class="text-h6 vertical-middle"> 五星:<span :class="poolLuckyValue5[1]">{{ poolLuckyValue5[0] }}</span></div>
           <div class="text-h6 vertical-middle"> 综合:<span :class="poolLuckyValue[1]">{{ poolLuckyValue[0] }}</span></div>
