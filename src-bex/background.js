@@ -1,17 +1,26 @@
 import {Arknights} from './hypergryphConnect';
 
 async function updateInformation() {
+  console.log('开始同步数据');
   let arknights = new Arknights();
+  console.log('进行身份验证');
+  console.log('官服' + arknights.officialStatus ? '已登录' : '未登录');
+  console.log('B服' + arknights.bilibiliStatus ? '已登录' : '未登录');
   await arknights.init();
   try {
+    console.log("同步抽卡数据")
     await arknights.syncPoolData();
+    console.log("同步源石数据")
     await arknights.syncStoneData();
+    console.log("同步充值数据")
     await arknights.syncRechargeData();
+    console.log("更新状态...")
     await arknights.updateStatus();
   } catch (e) {
     console.log(e);
     console.trace();
   }
+  console.log("数据同步完毕")
   if (arknights.officialPoolDifference > 0)
     await reportChanging(1);
   if (arknights.bilibiliPoolDifference > 0)
@@ -65,6 +74,7 @@ chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
     if (request.hasOwnProperty("Type")) {
       if (request.Type === "refresh") {
+        console.log("收到刷新请求")
         updateInformation().then(() => {
           sendResponse({message: "refreshed"});
         });

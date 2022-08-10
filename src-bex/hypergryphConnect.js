@@ -190,8 +190,8 @@ class Arknights {
     let results = [];
     rawData.forEach(items => {
         results.push({
-          timestamp: items["ts"],
-          amount: items["payTime"],
+          timestamp: items["payTime"],
+          amount: items["amount"],
           orderId: items["orderId"],
           productName: items["productName"],
           platform: items["platform"]
