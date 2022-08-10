@@ -1,6 +1,6 @@
 <template>
 
-  <q-btn color="secondary" label="从PRTS获取数据" @click="loadSchedule" v-if="waitData.length > 0 || outOfRange"></q-btn>
+  <q-btn color="secondary" label="从PRTS获取数据" @click="loadSchedule" v-if="waitData.length > 0 || outOfRange" :diable="loading"></q-btn>
   <div class="text-h5 vertical-middle">缓存卡池时间数据: {{ countPools }} 个卡池</div>
   <div class="q-gutter-sm">
 
@@ -83,6 +83,9 @@ export default {
       }
     let end = new Date(poolsSchedule[poolsSchedule.length - 1].end);
     this.outOfRange = end < new Date();
+    if (cachedYears === null) {
+      await this.loadSchedule();
+    }
   },
   emits: ['update:schedule'],
   props: {
