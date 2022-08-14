@@ -43,37 +43,41 @@
             <span v-if="item.type === 'single'"> {{ item.character }} </span>
             <q-badge color="red" v-if="item.isNew">New!</q-badge>
             <span v-if="item.type === 'single' || disableList"></span>
-            <span v-else v-for="(star, char, index) in item.characterNoRepeat" :key="index" >
+            <span v-else v-for="(star, char, index) in item.characterNoRepeat" :key="index">
               <span :class="star === 3 ? 'text-teal-6' : (star === 4 ? 'text-purple-6' : 'text-amber-7')">{{ char }}</span>,
             </span>
           </div>
           <q-intersection v-if="!print">
             <q-img loading="lazy" v-if="Object.keys(characterInfo).length > 0 && item.type === 'single'"
                    :src="characterInfo[item.character].image"
-                   spinner-color="white" style="height: 120px; max-width: 120px; font-size: 1px">
-              <div class="absolute-bottom text-subtitle6 text-center q-pa-xs">{{ item.starStr }}</div>
+                   spinner-color="white" style="height: 120px; max-width: 120px">
+              <div class="absolute-bottom text-subtitle6 text-center q-pa-xs">
+                <div class="absolute-top" style="transform: scale(0.8);"> {{ item.starStr }}</div>
+              </div>
             </q-img>
             <div v-if="!disableThumbnail && item.type !== 'single' && Object.keys(characterInfo).length > 0">
               <q-img v-for="(character, index) in item.characters"
                      :key="character" :ref="item.images[index]"
                      :src="item.images[index]"
                      pinner-color="white" style="height: 100px; max-width: 100px">
-                <div class="absolute-bottom text-center q-pa-xs" style="font-size: 1px"> {{ item.stars[index] }}</div>
+                <div class="absolute-bottom text-center q-pa-xs" style="">
+                  <div class="absolute-top"  style="transform: scale(0.8)"> {{ item.stars[index] }}</div>
+                </div>
               </q-img>
             </div>
           </q-intersection>
           <div v-else>
             <q-img v-if="Object.keys(characterInfo).length > 0 && item.type === 'single'"
                    :src="characterInfo[item.character].image"
-                   spinner-color="white" style="height: 120px; max-width: 120px; font-size: 1px">
-              <div class="absolute-bottom text-subtitle6 text-center q-pa-xs">{{ item.starStr }}</div>
+                   spinner-color="white" style="height: 120px; max-width: 120px;">
+              <div class="absolute-bottom text-subtitle6 text-center q-pa-xs" style=""><div class="absolute-top"  style="transform: scale(0.8)"> {{ item.starStr }}</div></div>
             </q-img>
             <div v-if="!disableThumbnail && item.type !== 'single' && Object.keys(characterInfo).length > 0">
               <q-img v-for="(character, index) in item.characters"
                      :key="character" :ref="item.images[index]"
                      :src="item.images[index]"
                      pinner-color="white" style="height: 100px; max-width: 100px">
-                <div class="absolute-bottom text-center q-pa-xs" style="font-size: 1px"> {{ item.stars[index] }}</div>
+                <div class="absolute-bottom text-center q-pa-xs" style=""><div class="absolute-top"  style="transform: scale(0.8)"> {{ item.stars[index] }}</div></div>
               </q-img>
             </div>
           </div>
