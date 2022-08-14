@@ -90,6 +90,7 @@ export default {
 
       let local = 0;
       let remote = 0;
+      remote_version.reverse();
       for (let i = 0; i < remote_version.length; i++)
         local += parseInt(local_version[i]) * (10 ** i);
       for (let i = 0; i < remote_version.length; i++)
