@@ -57,10 +57,7 @@ class Connect {
       if (json.code === 3000) {
         return false;
       }
-      if (json.data.list.length === 0) {
-        max = i - 1;
-        break;
-      }
+      max = json.data["pagination"].total;
       dataset.push(json.data.list);
     }
     return {data: dataset, pages: max};

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ArkRecord",
   "description": "方舟抽卡记录统计插件",
-  "version": "0.0.1.0",
+  "version": "0.0.0.10",
   "icons": {
     "16": "icons/record-16.png",
     "48": "icons/record-48.png",

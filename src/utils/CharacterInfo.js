@@ -5,14 +5,17 @@ import * as https from "https";
 
 const url = "https://prts.wiki/api.php?action=parse&format=json&page=干员一览"
 
+async function httpGet(url) {
+  return await fetch(url, {method: 'GET'});
+}
+
 async function requestBaseData() {
   let result = "";
-  await api.get(url)
-    .then(async (response) => {
-      if (response.data.hasOwnProperty("parse")) {
-        result = response.data["parse"]["text"]["*"];
-      }
-    });
+  let response = await httpGet(url);
+  let json = await response.json();
+  if (json.hasOwnProperty("parse")) {
+    result = json["parse"]["text"]["*"];
+  }
   return result;
 }
 
@@ -43,10 +46,11 @@ function filterUrl(text) {
 }
 
 
-async function syncCharactersInformation(forceRefresh = false, haveUpdated = () => {}) {
+async function syncCharactersInformation(forceRefresh = false, haveUpdated = () => {
+}) {
   let charactersInformation = await readLocalStorage("charactersInformation");
   if (charactersInformation === null || new Date(charactersInformation.last) - new Date() > 1000 * 60 * 60 * 24 || forceRefresh) {
-    if(!forceRefresh)
+    if (!forceRefresh)
       haveUpdated();
     let htmlText = await requestBaseData();
     let result = await parsePRTSHtml(htmlText);
