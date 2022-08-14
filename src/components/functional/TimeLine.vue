@@ -9,13 +9,18 @@
     <q-toggle v-model="print" label="启用截图"/>
     <screen-shot v-if="print" label="点击截图(全屏)" :key="screenShotKey"/>
     <screen-shot v-if="print" label="点击截图(仅限时间线)" :element="getTimeLineElement()" :key="screenShotKey"/>
-    数据来源: <a href="https://prts.wiki/w/卡池一览/常驻标准寻访" class="doc-link">prts.wiki
-    <span class="q-icon" aria-hidden="true" role="presentation">
+    <div class="row inline">
+      <div class="text-center vertical-middle">
+        图片数据来源:
+        <a href="https://prts.wiki/w/卡池一览/常驻标准寻访" class="doc-link">prts.wiki
+          <span class="q-icon" aria-hidden="true" role="presentation">
       <svg viewBox="0 0 24 24">
         <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"></path>
       </svg>
     </span>
-  </a>
+        </a></div>
+    </div>
+    <q-btn color="warning" label="强制刷新图片数据" @click="forceRefresh"/>
   </div>
   <div :style="mainBodyStyle">
     <q-timeline :layout="$q.screen.lt.sm ? 'dense' : ($q.screen.lt.md ? 'comfortable' : 'loose')" color="secondary" id="timeline">
@@ -31,7 +36,10 @@
         :key="index"
       >
         <div>
-          <div class="text-h5 vertical-middle"> {{ item.character }}</div>
+          <div class="text-h5 vertical-middle">第 <span class="text-red-8">{{ item.count }}</span> 抽</div>
+          <div class="text-h5 vertical-middle"> {{ item.character }}
+            <q-badge color="red" v-if="item.isNew">New!</q-badge>
+          </div>
           <q-intersection v-if="!print">
             <q-img loading="lazy" v-if="Object.keys(characterInfo).length > 0 && item.type === 'single'"
                    :src="characterInfo[item.character].image"
@@ -72,6 +80,7 @@
 import {Pool} from "src/utils/data";
 import {syncCharactersInformation} from "src/utils/CharacterInfo";
 import ScreenShot from "components/functional/ScreenShot.vue";
+import {Notify} from "quasar";
 
 export default {
   name: "TimeLine",
@@ -85,12 +94,15 @@ export default {
     update() {
       this.line = [];
       this.pool.sortUp();
+      let count = 1;
       this.pool.records.forEach(record => {
         this.line.push({
           date: new Date(record.timestamp),
           star: record.star,
           isFirstTimes: record.isFirstTimes,
           character: record.character,
+          count: count,
+          isNew: record.isFirstTimes,
           type: "single",
           starStr: (() => {
             let str = "";
@@ -111,6 +123,7 @@ export default {
             }
           })()
         });
+        count++;
       });
     },
     generalize() {
@@ -130,12 +143,12 @@ export default {
       this.line.forEach(item => {
         if (item.star === 3 || (item.star === 4 && star === 4)) {
           temp.push(item);
-        } else {
-          newLine.push(item);
         }
-        if (temp.length > 0 && !(item.star === 3 || (item.star === 4 && star === 4)) || index === this.line.length - 1) {
+        if (temp.length > 0 && (!(item.star === 3 || (item.star === 4 && star === 4)) || (index === this.line.length - 1))) {
           let start = temp[0].date.getTime();
-          let end = temp[0].date.getTime();
+          let end = temp[temp.length - 1].date.getTime();
+          let countStart = temp[0].count;
+          let countEnd = temp[temp.length - 1].count;
           let star3 = 0;
           let star4 = 0;
           let characters = [];
@@ -162,6 +175,8 @@ export default {
             characters: characters,
             images: images,
             stars: stars,
+            count: `${countStart}-${countEnd}`,
+            isNew: false,
             type: star === 4 ? "3/4" : "3",
             character: (() => {
               let char = "";
@@ -172,7 +187,11 @@ export default {
               }
               return char;
             })()
-          })
+          });
+          temp = [];
+        }
+        if (!(item.star === 3 || (item.star === 4 && star === 4))) {
+          newLine.push(item);
         }
         index++;
       });
@@ -185,6 +204,15 @@ export default {
         newLine.reverse();
       this.line = newLine;
     },
+    async forceRefresh() {
+      this.print = false;
+      let characterInfo = await syncCharactersInformation(true);
+      characterInfo.forEach(info => {
+        this.characterInfo[info.name] = info;
+      });
+      this.update();
+      this.generalize()
+    }
   },
   async mounted() {
     this.screenShotKey = new Date().getTime();
@@ -203,7 +231,7 @@ export default {
     pool: {
       async handler() {
         this.print = false;
-        let characterInfo = await syncCharactersInformation();
+        let characterInfo = await syncCharactersInformation(false, () => Notify.create({type: 'positive', message: '正在更新干员信息和图片缓存', timeout: 3000}));
         characterInfo.forEach(info => {
           this.characterInfo[info.name] = info;
         });

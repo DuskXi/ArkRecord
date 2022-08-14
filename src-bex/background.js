@@ -1,39 +1,48 @@
 import {Arknights} from './hypergryphConnect';
 
-async function updateInformation() {
-  console.log('开始同步数据');
+async function updateInformation(feedback) {
+  feedback('开始同步数据');
   let arknights = new Arknights();
-  console.log('进行身份验证');
-  console.log('官服' + arknights.officialStatus ? '已登录' : '未登录');
-  console.log('B服' + arknights.bilibiliStatus ? '已登录' : '未登录');
+  feedback('进行身份验证');
+  feedback('官服' + (arknights.officialStatus ? '已登录' : '未登录'));
+  feedback('B服' + (arknights.bilibiliStatus ? '已登录' : '未登录'));
   await arknights.init();
   try {
-    console.log("同步抽卡数据")
+    feedback("同步寻访数据")
     await arknights.syncPoolData();
-    console.log("同步源石数据")
+    feedback("寻访数据同步完成")
+    feedback("同步源石数据中...")
     await arknights.syncStoneData();
-    console.log("同步充值数据")
+    feedback("源石数据同步完成")
+    feedback("同步充值数据中...")
     await arknights.syncRechargeData();
-    console.log("更新状态...")
+    feedback("充值数据同步完成")
+    feedback("更新状态...")
     await arknights.updateStatus();
   } catch (e) {
     console.log(e);
     console.trace();
   }
-  console.log("数据同步完毕")
+  feedback("数据同步完毕")
   if (arknights.officialPoolDifference > 0)
-    await reportChanging(1);
+    await reportChanging(arknights.officialPoolDifference, "寻访", 1);
   if (arknights.bilibiliPoolDifference > 0)
-    await reportChanging(2);
+    await reportChanging(arknights.officialPoolDifference, "寻访", 2);
+  if (arknights.officialStoneDifference > 0)
+    await reportChanging(arknights.officialStoneDifference, "源石变更", 1);
+  if (arknights.bilibiliStoneDifference > 0)
+    await reportChanging(arknights.officialStoneDifference, "源石变更", 2);
+  if (arknights.officialRechargeDifference > 0)
+    await reportChanging(arknights.officialRechargeDifference, "充值", 1);
   console.log(arknights)
 }
 
-async function reportChanging(type = 1) {
+async function reportChanging(count, name, type = 1,) {
   chrome.notifications.create('DataUpdate', {
     type: 'basic',
     iconUrl: '/icons/record-128.png',
-    title: (type ? '官服:' : 'B服') + '有新的抽卡数据更新, 更新了' + count + '条数据',
-    message: '抽卡数据已更新，请刷新页面查看',
+    title: (type ? '官服:' : 'B服') + `有新的${name}数据更新, 更新了${count}条数据`,
+    message: `${name}数据已更新，请刷新页面查看`,
     priority: 2
   })
 }
@@ -67,18 +76,26 @@ function getUpdate(count, bilibili) {
   })
 }
 
-updateInformation().then(_ => {
+function print(message) {
+  console.log(message);
+}
+
+updateInformation(print).then(_ => {
 });
 
 chrome.runtime.onMessage.addListener(
-  function (request, sender, sendResponse) {
+  async function (request, sender, sendResponse) {
     if (request.hasOwnProperty("Type")) {
+      let initiative = request["initiative"];
       if (request.Type === "refresh") {
         console.log("收到刷新请求")
-        updateInformation().then(() => {
-          sendResponse({message: "refreshed"});
-        });
+        await updateInformation(message => {
+          if (initiative)
+            chrome.runtime.sendMessage({type: "statusUpdate", message: message});
+          print(message);
+        })
       }
+      sendResponse({});
     }
   }
 );

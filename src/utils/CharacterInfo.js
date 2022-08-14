@@ -42,9 +42,12 @@ function filterUrl(text) {
     return text;
 }
 
-async function syncCharactersInformation() {
+
+async function syncCharactersInformation(forceRefresh = false, haveUpdated = () => {}) {
   let charactersInformation = await readLocalStorage("charactersInformation");
-  if (charactersInformation === null || new Date(charactersInformation.last) - new Date() > 1000 * 60 * 60 * 24) {
+  if (charactersInformation === null || new Date(charactersInformation.last) - new Date() > 1000 * 60 * 60 * 24 || forceRefresh) {
+    if(!forceRefresh)
+      haveUpdated();
     let htmlText = await requestBaseData();
     let result = await parsePRTSHtml(htmlText);
     let data = {

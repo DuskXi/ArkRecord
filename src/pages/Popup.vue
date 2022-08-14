@@ -26,7 +26,7 @@
       <q-badge :color="loginB?'green':'orange'">B服: {{ loginB ? '已' : '未' }}登录</q-badge>
     </div>
     <div class="text-h6 vertical-middle" style="color: red; margin-top: 20px;margin-bottom: 20px;" v-if="!login">鹰角网站未登录</div>
-    <q-btn color="primary" style="margin-top: 20px; margin-bottom: 20px;" v-if="!login" label="点击刷新数据" @click="update"/>
+    <q-btn color="primary" style="margin-top: 20px; margin-bottom: 20px;" label="点击刷新数据" @click="update"/>
   </q-page>
 </template>
 
@@ -164,23 +164,25 @@ export default defineComponent({
       };
     },
     async update() {
-      chrome.runtime.sendMessage({Type: "refresh"}, function (response) {
+      chrome.runtime.sendMessage({Type: "refresh", initiative: true}, function (response) {
         location.reload();
       });
     }
   },
   async mounted() {
-    chrome.runtime.sendMessage({Type: "refresh"}, function (_) {
-    });
     chrome.runtime.onMessage.addListener(
       function (request, sender, sendResponse) {
-        if (request.hasOwnProperty("message")) {
-          if (request.Message === "refreshed") {
-            location.reload();
-          }
+        if (request.type === "statusUpdate") {
+          Notify.create({
+            type: 'positive',
+            message: '状态更新: ' + request.message,
+            timeout: 2000
+          })
         }
+        sendResponse({});
       }
     );
+
     console.log("mounted");
     await this.updateInformation();
     await this.loginCheck();

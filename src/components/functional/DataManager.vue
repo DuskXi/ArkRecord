@@ -31,13 +31,27 @@ export default {
   methods: {
     refreshData() {
       var core = this;
-      chrome.runtime.sendMessage({Type: "refresh"}, function (_) {
-        core.$emit('update:dataUpdated', new Date().getTime());
+      chrome.runtime.sendMessage({Type: "refresh", initiative: true}, function (message) {
+        // core.$emit('update:dataUpdated', new Date().getTime());
         Notify.create({
           type: 'positive',
-          message: '更新完成，请刷新或者再按一次按钮'
+          message: '数据已刷新'
         })
       });
+    },
+    registryListener() {
+      chrome.runtime.onMessage.addListener(
+        function (request, sender, sendResponse) {
+          if (request.type === "statusUpdate") {
+            Notify.create({
+              type: 'positive',
+              message: '状态更新: ' + request.message,
+              timeout: 5000
+            })
+          }
+          sendResponse({});
+        }
+      );
     },
     async exportData(type) {
       if (type === 'json') {
@@ -173,6 +187,9 @@ export default {
       });
       return csv;
     }
+  },
+  mounted() {
+    this.registryListener();
   },
   data: () => ({}),
   props: {

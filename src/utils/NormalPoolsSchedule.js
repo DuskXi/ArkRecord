@@ -35,17 +35,27 @@ function parsePRTSHtml(htmlText) {
   let trList = table.find('tr');
   let result = [];
   trList.each((index, tr) => {
-    if (index !== 0) {
-      let tdList = $(tr).find('td');
-      let imageUrl = tdList.eq(1).find('img').attr('srcset');
-      let imageUrls = imageUrl.match(/(\/[-a-zA-Z0-9@:%_+.~#?&/=]+)/g)
-      let finalString = '';
-      tdList[2].children.forEach((child) => {
-        if (child.type === "text") {
-          finalString += " " + child.data;
-        }
-      })
-      result.push([finalString, "https://prts.wiki" + imageUrls[imageUrls.length - 1]]);
+    try {
+      if (index !== 0) {
+        let tdList = $(tr).find('td');
+        let imageUrl = tdList.eq(1).find('img').attr('srcset');
+        let imageUrls = "";
+        if (imageUrl == null) {
+          imageUrl = tdList.eq(1).find('img').attr('src');
+          imageUrls = [imageUrl];
+        } else
+          imageUrls = imageUrl.match(/(\/[-a-zA-Z0-9@:%_+.~#?&/=]+)/g)
+        let finalString = '';
+        tdList[2].children.forEach((child) => {
+          if (child.type === "text") {
+            finalString += " " + child.data;
+          }
+        })
+        result.push([finalString, "https://prts.wiki" + imageUrls[imageUrls.length - 1]]);
+      }
+    } catch (e) {
+      console.log(e);
+      console.log("Skip row " + index);
     }
   });
   return result;

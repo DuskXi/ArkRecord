@@ -13,6 +13,7 @@
     <q-toggle v-model="enableDetailsCount" label="显示详细统计"/>
     <q-toggle v-model="enableDetailsCheckBox" label="复选框悬停预览" v-if="schedule.length <= 0"/>
     <q-toggle v-model="enableImage" label="显示卡池图片" v-if="schedule.length > 0"/>
+    <q-toggle v-model="enableNewCharShow" label="显示新增角色"/>
   </div>
   <q-card style="background-color: rgba(255,255,255, 0.4)">
     <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
@@ -25,8 +26,20 @@
     <q-separator/>
     <q-tab-panels v-model="shownTab" style="background-color: rgba(255,255,255, 0.1)" animated>
       <q-tab-panel v-for="(pool, index) in splitPools" :key="index" :name="index">
-        <div class="q-gutter-sm" v-if="enableImage">
-          <q-img :src="imageUrls[index]" spinner-color="white" style=" max-width: 350px" fit="scale-down" v-if="schedule.length > 0"/>
+        <div class="q-gutter-sm">
+          <q-img :src="imageUrls[index]" spinner-color="white" style=" max-width: 350px" fit="scale-down" v-if="schedule.length > 0 && enableImage"/>
+          <div v-if="!enableNewCharShow"></div>
+          <div v-else class="column inline" v-for="(chars, index) in getNewCharacters(pool)" :key="index">
+            <div class="col" style="background-color: rgba(255,255,255, 0.3)">
+              <q-avatar rounded size="100px">
+                <img :src="characterInfo[chars.character].image"/>
+                <q-badge floating color="red">new!</q-badge>
+                <q-badge class="absolute-bottom item-center" style="transform: scale(0.8); background-color: rgba(0,0,0,0)"><span>{{ chars.star }}</span></q-badge>
+              </q-avatar>
+            </div>
+            <div class="col text-center">{{ chars.character }}</div>
+          </div>
+          <div class="text-h4 vertical-middle text-red-8" v-if="enableNewCharShow && getNewCharacters(pool).length === 0">无新干员</div>
         </div>
         <div class="text-h5">样本数量: {{ pool.records.length }}</div>
         <q-markup-table :grid="$q.screen.lt.md" style="background-color: rgba(255,255,255, 0.0)" class="no-box-shadow">
@@ -63,6 +76,7 @@ import {readLocalStorage} from "src/utils/storage";
 import {buildTotalData, loadPools, splitNormalPools, mergePools, splitNormalPoolsBySchedule} from "src/utils/data";
 import PoolsSchedule from "components/functional/PoolsSchedule.vue";
 import TimeLine from "components/functional/TimeLine.vue";
+import {syncCharactersInformation} from "src/utils/CharacterInfo";
 
 export default {
   name: "NormalSplitTable",
@@ -115,8 +129,34 @@ export default {
       }
       this.splitPools = newSplitPools;
     },
+    getNewCharacters(pool) {
+      let chars = [];
+      let count = 0;
+      pool.records.forEach(record => {
+        count++;
+        if (record.isFirstTimes) {
+          chars.push({
+            character: record.character,
+            star: this.starStr(record.star),
+            count: count,
+          });
+        }
+      });
+      return chars;
+    },
+    starStr(star) {
+      let str = "";
+      for (let i = 0; i < star; i++) {
+        str += "⭐";
+      }
+      return str;
+    }
   },
   async mounted() {
+    let characterInfo = await syncCharactersInformation();
+    characterInfo.forEach(info => {
+      this.characterInfo[info.name] = info;
+    });
     await this.loadData();
     if (this.splitPools.length > 0) {
       this.shownTab = 0; //this.splitPools[0].name;
@@ -167,6 +207,8 @@ export default {
     imageUrls: [],
     ranges: [],
     enableImage: false,
+    enableNewCharShow: true,
+    characterInfo: {}
   })
 }
 </script>

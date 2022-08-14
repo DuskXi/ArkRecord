@@ -22,8 +22,8 @@
                         v-model="shownMode" :options="showOptions" class="my-custom-toggle" toggle-color="primary" color="white" text-color="primary"/>
         </div>
         <div class="col" style="margin-bottom: 20px; " :key="containerKey" v-if="pools.length > 0">
-          <totalTable v-if="shownMode === '1'" :bilibili="bilibili"></totalTable>
-          <poolsTable v-if="shownMode === '2'" :bilibili="bilibili"></poolsTable>
+          <poolsTable v-if="shownMode === '1'" :bilibili="bilibili"></poolsTable>
+          <totalTable v-if="shownMode === '2'" :bilibili="bilibili"></totalTable>
           <normalSplitTable v-if="shownMode === '3'" :bilibili="bilibili"></normalSplitTable>
           <chartShow v-if="shownMode === '4'" :bilibili="bilibili"></chartShow>
           <statisticsAnalyze v-if="shownMode === '5'" :bilibili="bilibili"></statisticsAnalyze>
@@ -83,7 +83,7 @@ export default defineComponent({
     pools: [],
     poolsDict: {},
     shownMode: "1",
-    showOptions: [{label: '有限选择', value: '1'}, {label: '全部列出', value: '2'}, {label: '纯常驻寻访', value: '3'},
+    showOptions: [{label: '卡池分类', value: '1'}, {label: '有限选择', value: '2'}, {label: '纯常驻寻访', value: '3'},
       {label: '图表', value: '4'}, {label: '统计学分析', value: '5'}, {label: '源石&充值记录', value: '6'}],
     bilibili: false,
     login: false,

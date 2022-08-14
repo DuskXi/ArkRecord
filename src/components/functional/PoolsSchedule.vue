@@ -76,6 +76,8 @@ export default {
       this.poolsScheduleYears = [].concat(await readLocalStorage("PoolsScheduleYears"));
       this.countPools = poolsSchedule.length;
       this.scheduleUpdate = poolsSchedule;
+    } else {
+      await this.loadSchedule();
     }
     for (let i = this.startYear; i <= currentYear; i++)
       if (!this.poolsScheduleYears.includes(i)) {
@@ -83,9 +85,6 @@ export default {
       }
     let end = new Date(poolsSchedule[poolsSchedule.length - 1].end);
     this.outOfRange = end < new Date();
-    if (cachedYears === null) {
-      await this.loadSchedule();
-    }
   },
   emits: ['update:schedule'],
   props: {
