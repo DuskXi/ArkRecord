@@ -2,10 +2,12 @@
   <div class="text-h5 vertical-middle	">卡池时间线:</div>
   <div class="q-gutter-sm">
     <q-toggle v-model="reserve" label="反转顺序"/>
-    <q-toggle v-model="generalizeStar34" label="收起3/4星"/>
-    <q-toggle v-if="!generalizeStar34" v-model="generalizeStar3" label="收起3星"/>
+    <q-toggle v-model="generalizeStar345" label="收起3/4/5星"/>
+    <q-toggle v-if="!generalizeStar345" v-model="generalizeStar34" label="收起3/4星"/>
+    <q-toggle v-if="!generalizeStar34 && !generalizeStar345" v-model="generalizeStar3" label="收起3星"/>
     <q-toggle v-if="!disableThumbnail" v-model="noRepeat" label="去重"/>
-    <q-toggle v-model="disableThumbnail" label="不显示折叠的图片"/>
+    <q-toggle v-if="generalizeStar3 || generalizeStar34 || generalizeStar345" v-model="disableThumbnail" label="不显示折叠的图片"/>
+    <q-toggle v-if="generalizeStar3 || generalizeStar34 || generalizeStar345" v-model="disableList" label="折叠干员名单"/>
     <q-toggle v-model="print" label="启用截图"/>
     <screen-shot v-if="print" label="点击截图(全屏)" :key="screenShotKey"/>
     <screen-shot v-if="print" label="点击截图(仅限时间线)" :element="getTimeLineElement()" :key="screenShotKey"/>
@@ -36,8 +38,12 @@
         :key="index"
       >
         <div>
-          <div class="text-h5 vertical-middle">第 <span class="text-red-8">{{ item.count }}</span> 抽</div>
-          <div class="text-h5 vertical-middle"> {{ item.character }}
+          <div class="text-h5 vertical-middle">第 <span class="text-red-8">{{ item.count }}</span> 抽 {{ item.type !== 'single' ? `(共${item.number}个干员)` : '' }}</div>
+          <div class="text-h5 vertical-middle" v-if="item.type !== 'single' && !disableList">
+            <span v-if="item.type === 'single'"> {{ item.character }}</span>
+            <span v-else v-for="(star, char, index) in item.characterNoRepeat" :key="index" >
+              <span :class="star === 3 ? 'text-teal-6' : (star === 4 ? 'text-purple-6' : 'text-amber-7')">{{ char }}</span>,
+            </span>
             <q-badge color="red" v-if="item.isNew">New!</q-badge>
           </div>
           <q-intersection v-if="!print">
@@ -131,28 +137,31 @@ export default {
       let temp = [];
       let newLine = [];
       let star = 3;
-      if (!this.generalizeStar3 && !this.generalizeStar34) {
+      if (!this.generalizeStar3 && !this.generalizeStar34 && !this.generalizeStar345) {
         if (this.reserve)
           this.line.reverse();
         return;
       } else {
         if (this.generalizeStar34)
           star = 4;
+        if (this.generalizeStar345)
+          star = 5;
       }
       let index = 0;
       this.line.forEach(item => {
-        if (item.star === 3 || (item.star === 4 && star === 4)) {
+        if (item.star === 3 || (item.star === 4 && star >= 4) || (item.star === 5 && star === 5)) {
           temp.push(item);
         }
-        if (temp.length > 0 && (!(item.star === 3 || (item.star === 4 && star === 4)) || (index === this.line.length - 1))) {
+        if (temp.length > 0 && (!(item.star === 3 || (item.star === 4 && star >= 4) || (item.star === 5 && star === 5)) || (index === this.line.length - 1))) {
           let start = temp[0].date.getTime();
           let end = temp[temp.length - 1].date.getTime();
           let countStart = temp[0].count;
           let countEnd = temp[temp.length - 1].count;
           let star3 = 0;
           let star4 = 0;
+          let star5 = 0;
           let characters = [];
-          let characterNoRepeat = [];
+          let characterNoRepeat = {};
           let images = [];
           let stars = [];
           temp.forEach(element => {
@@ -160,37 +169,42 @@ export default {
             end = Math.max(end, element.date.getTime());
             star3 += element.star === 3 ? 1 : 0;
             star4 += element.star === 4 ? 1 : 0;
+            star5 += element.star === 5 ? 1 : 0;
             if (!characters.includes(element.character) || !this.noRepeat) {
               characters.push(element.character);
               images.push(this.characterInfo[element.character].image);
-              stars.push(element.star === 3 ? "⭐⭐⭐" : "⭐⭐⭐⭐");
+              stars.push(element.star === 3 ? "⭐⭐⭐" : (element.star === 4 ? "⭐⭐⭐⭐" : "⭐⭐⭐⭐⭐"));
             }
-            if (!characterNoRepeat.includes(element.character))
-              characterNoRepeat.push(element.character);
+            if (!Object.keys(characterNoRepeat).includes(element.character))
+              characterNoRepeat[element.character] = element.star;
           })
           newLine.push({
             date: [new Date(start), new Date(end)],
             star3: star3,
             star4: star4,
+            star5: star5,
             characters: characters,
             images: images,
             stars: stars,
             count: `${countStart}-${countEnd}`,
+            number: temp.length,
             isNew: false,
-            type: star === 4 ? "3/4" : "3",
+            type: star === 3 ? "3" : (star === 4 ? "3/4" : "3/4/5"),
+            characterNoRepeat: characterNoRepeat,
             character: (() => {
               let char = "";
-              for (let i = 0; i < characterNoRepeat.length; i++) {
-                char += characterNoRepeat[i];
-                if (i < characterNoRepeat.length - 1)
-                  char += ", ";
+              let keys = Object.keys(characterNoRepeat)
+              for (let i = 0; i < keys.length; i++) {
+                char += `<span class="${characterNoRepeat[keys[i]] === 3 ? 'text-grey-1' : (characterNoRepeat[keys[i]] === 4 ? 'text-purple-6' : 'text-amber-7')}">${keys[i]}</span>`;
+                // if (i < characterNoRepeat.length - 1)
+                //   char += ", ";
               }
               return char;
             })()
           });
           temp = [];
         }
-        if (!(item.star === 3 || (item.star === 4 && star === 4))) {
+        if (!(item.star === 3 || (item.star === 4 && star >= 4) || (item.star === 5 && star === 5))) {
           newLine.push(item);
         }
         index++;
@@ -253,6 +267,9 @@ export default {
     generalizeStar3() {
       this.generalize();
     },
+    generalizeStar345() {
+      this.generalize();
+    },
     noRepeat() {
       this.generalize();
     },
@@ -269,8 +286,10 @@ export default {
   data: () => ({
     line: [],
     characterInfo: {},
+    generalizeStar345: false,
     generalizeStar34: false,
     generalizeStar3: false,
+    disableList: false,
     noRepeat: true,
     disableThumbnail: false,
     print: false,
