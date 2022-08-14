@@ -39,12 +39,13 @@
       >
         <div>
           <div class="text-h5 vertical-middle">第 <span class="text-red-8">{{ item.count }}</span> 抽 {{ item.type !== 'single' ? `(共${item.number}个干员)` : '' }}</div>
-          <div class="text-h5 vertical-middle" v-if="item.type !== 'single' && !disableList">
-            <span v-if="item.type === 'single'"> {{ item.character }}</span>
+          <div class="text-h5 vertical-middle">
+            <span v-if="item.type === 'single'"> {{ item.character }} </span>
+            <q-badge color="red" v-if="item.isNew">New!</q-badge>
+            <span v-if="item.type === 'single' || disableList"></span>
             <span v-else v-for="(star, char, index) in item.characterNoRepeat" :key="index" >
               <span :class="star === 3 ? 'text-teal-6' : (star === 4 ? 'text-purple-6' : 'text-amber-7')">{{ char }}</span>,
             </span>
-            <q-badge color="red" v-if="item.isNew">New!</q-badge>
           </div>
           <q-intersection v-if="!print">
             <q-img loading="lazy" v-if="Object.keys(characterInfo).length > 0 && item.type === 'single'"
