@@ -12,6 +12,13 @@
             @click="() => exportTable(1)"
           />
         </template>
+        <template v-slot:body="props">
+          <q-tr :props="props">
+            <q-td v-for="col in props.cols" :key="col.name" :props="props">
+              {{ col.name === "time" ? new Date(col.value).toLocaleString() : (col.name === "change" ? col.value > 0 ? "+" + col.value : col.value : col.value) }}
+            </q-td>
+          </q-tr>
+        </template>
       </q-table>
     </div>
     <div class="col-sm-12 col-md-6 q-pa-md">
@@ -25,6 +32,13 @@
             no-caps
             @click="() => exportTable(2)"
           />
+        </template>
+        <template v-slot:body="props">
+          <q-tr :props="props">
+            <q-td v-for="col in props.cols" :key="col.name" :props="props">
+              {{ col.name === "time" ? new Date(col.value).toLocaleString() : col.value }}
+            </q-td>
+          </q-tr>
         </template>
       </q-table>
     </div>
@@ -124,15 +138,17 @@ export default {
       let recharge = await readLocalStorage(this.bilibili ? "RechargeBilibili" : "RechargeOfficial");
       this.stone = stone != null ? stone : [];
       this.recharge = recharge != null ? recharge : [];
+      this.stone.sort((a, b) => a.timestamp - b.timestamp).reverse();
+      this.recharge.sort((a, b) => a.timestamp - b.timestamp).reverse();
     },
     async generateStoneTableData() {
       this.rowsStone = [];
       this.stone.forEach(value => {
         let change = parseInt(value.changes[0].after) - parseInt(value.changes[0].before);
         this.rowsStone.push({
-          time: new Date(value.timestamp * 1000).toLocaleString(),
+          time: value.timestamp * 1000,
           operation: value.operation,
-          change: change > 0 ? "+" + change : change,
+          change: change,
           remain: value.changes[0].after,
           platform: value.changes[0].type
         });
@@ -142,7 +158,7 @@ export default {
       this.rowsRecharge = [];
       this.recharge.forEach(value => {
         this.rowsRecharge.push({
-          time: new Date(value.timestamp * 1000).toLocaleString(),
+          time: value.timestamp * 1000,
           orderId: value.orderId,
           productName: value.productName,
           amount: value.amount / 100

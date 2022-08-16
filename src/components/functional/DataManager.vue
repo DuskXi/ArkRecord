@@ -1,7 +1,7 @@
 <template>
   <q-btn-group class="float-right" push>
     <q-btn color="accent" label="刷新数据" @click="refreshData()"/>
-    <q-btn color="positive" label="导入数据" @click="loadData()"/>
+    <q-btn color="positive" label="导入数据" @click="uploadData()"/>
     <q-btn-dropdown color="secondary" label="导出数据">
       <q-list>
         <q-item clickable v-close-popup @click="exportData('json')">
@@ -23,20 +23,16 @@
 
 <script>
 import {Notify, exportFile} from "quasar";
-import {readLocalStorage} from "src/utils/storage";
+import {readLocalStorage, listLocalStorageKeys, writeLocalStorage} from "src/utils/storage";
 import {loadPools, buildTotalData} from "src/utils/data";
+import {DataLoader} from "src/utils/DataLoader";
 
 export default {
   name: "DataManager",
   methods: {
     refreshData() {
-      var core = this;
-      chrome.runtime.sendMessage({Type: "refresh", initiative: true}, function (message) {
-        // core.$emit('update:dataUpdated', new Date().getTime());
-        Notify.create({
-          type: 'positive',
-          message: '数据已刷新'
-        })
+      chrome.runtime.sendMessage({Type: "refresh", initiative: true}, function () {
+        Notify.create({type: 'positive', message: '数据已刷新'})
       });
     },
     registryListener() {
@@ -54,29 +50,24 @@ export default {
       );
     },
     async exportData(type) {
+      let dataLoader = await this.loadData();
       if (type === 'json') {
-        let data = {
-          "poolsData": await readLocalStorage("ArknightsCardInformation"),
-          "poolsDataB": await readLocalStorage("ArknightsCardInformationB")
-        }
-        const content = JSON.stringify(data, null, 4);
-        exportFile('exported_data.json', content, 'text/json')
+        let content = dataLoader.toJson();
+        let currentTime = new Date();
+        let timeString = `${currentTime.toLocaleDateString()} ${currentTime.toLocaleTimeString()}`;
+        timeString = timeString.replace(/\//g, '-').replace(/:/g, '-');
+        exportFile(`ArkRecord_data_${timeString}.json`, content, 'text/json')
       } else if (type === 'csv') {
-        let poolsData = await readLocalStorage("ArknightsCardInformation");
-        let poolsDataB = await readLocalStorage("ArknightsCardInformationB");
-        if (poolsData !== null) {
-          let csv = this.poolsDataToCsv(poolsData);
-          exportFile('exported_data.csv', "\uFEFF" + csv, 'text/csv')
-        }
-        if (poolsDataB !== null) {
-          let csv = this.poolsDataToCsv(poolsDataB);
-          exportFile('exported_data_bilibili.csv', "\uFEFF" + csv, 'text/csv')
-        }
-        if (poolsData === null && poolsDataB === null) {
-          Notify.create({
-            type: 'negative',
-            message: '没有数据可以导出'
-          })
+        let csvDict = dataLoader.toCsv();
+        let currentTime = new Date();
+        let timeString = `${currentTime.toLocaleDateString()} ${currentTime.toLocaleTimeString()}`;
+        timeString = timeString.replace(/\//g, '-').replace(/:/g, '-');
+        let keys = Object.keys(csvDict);
+        for (let i = 0; i < keys.length; i++) {
+          let content = csvDict[keys[i]];
+          if (content !== null) {
+            exportFile(`exported_${keys[i]}_${timeString}.csv`, "\uFEFF" + content, 'text/csv');
+          }
         }
       } else {
         Notify.create({
@@ -84,56 +75,72 @@ export default {
           message: '不支持的类型' + `: "${type}"`
         })
       }
-    },
-    loadData() {
-      document.getElementById("uploader").click();
-    },
-    fileLoaded() {
-      let file = document.getElementById("uploader").files[0];
-      const reader = new FileReader();
-      var core = this;
-      reader.onload = async function (evt) {
-        let data = JSON.parse(evt.target.result);
-        let success = false;
-        if (data.hasOwnProperty("poolsData") && data["poolsData"] != null) {
-          await core.saveToStorage(data.poolsData, false);
-          success = true;
-        }
-        if (data.hasOwnProperty("poolsDataB") && data["poolsDataB"] != null) {
-          await core.saveToStorage(data.poolsDataB, true);
-          success = true;
-        }
-        if (!success) {
-          Notify.create({
-            type: 'negative',
-            message: '导入数据失败，请检查文件是否正确'
-          })
-        }
-      };
-      reader.readAsText(file);
-    },
-    async saveToStorage(data, bilibili = false) {
-      let merged = await this.mergeData(data, bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
-      let mergedData = merged[0];
-      mergedData.sort((a, b) => b.timestamp - a.timestamp);
-      let infoData = {}
-      infoData[(bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation")] = mergedData
-      chrome.storage.local.set(infoData);
-      let pools = [];
-      mergedData.forEach(item => {
-        if (!pools.includes(item.pool)) pools.push(item.pool);
-      });
-      let poolsData = {};
-      poolsData[(bilibili ? "poolsB" : "pools")] = pools;
-      chrome.storage.local.set(poolsData);
+
       Notify.create({
         type: 'positive',
-        message: '成功导入数据 ' + merged[1] + ' 条'
+        message: `导出: ${dataLoader.summary()}`
       })
-      this.$emit('update:dataUpdated', new Date().getTime())
     },
-    async mergeData(data, key = "ArknightsCardInformation") {
-      let local = await readLocalStorage(key);
+    async loadData() {
+      let dataLoader = new DataLoader();
+      let keys = await listLocalStorageKeys();
+      if (keys.includes("ArknightsCardInformation"))
+        dataLoader.officialPools = await readLocalStorage("ArknightsCardInformation");
+      if (keys.includes("ArknightsCardInformationB"))
+        dataLoader.bilibiliPools = await readLocalStorage("ArknightsCardInformationB");
+      if (keys.includes("StoneOfficial"))
+        dataLoader.officialStones = await readLocalStorage("StoneOfficial");
+      if (keys.includes("StoneBilibili"))
+        dataLoader.bilibiliStones = await readLocalStorage("StoneBilibili");
+      if (keys.includes("RechargeOfficial"))
+        dataLoader.officialRecharge = await readLocalStorage("RechargeOfficial");
+      if (keys.includes("RechargeBilibili"))
+        dataLoader.bilibiliRecharge = await readLocalStorage("RechargeBilibili");
+      return dataLoader;
+    },
+    uploadData() {
+      document.getElementById("uploader").click();
+    },
+    async fileLoaded() {
+      let file = document.getElementById("uploader").files[0];
+      const reader = new FileReader();
+      let result = await new Promise((resolve, reject) => {
+        reader.onload = function (e) {
+          resolve(e.target.result);
+        };
+        reader.onerror = function (e) {
+          reject(e);
+        }
+        reader.readAsText(file);
+      });
+      try {
+        let dataLoader = new DataLoader();
+        dataLoader.load(result);
+        if (dataLoader.officialPools.length > 0)
+          await writeLocalStorage("ArknightsCardInformation", this.merge(dataLoader.officialPools, await readLocalStorage("ArknightsCardInformation")));
+        if (dataLoader.bilibiliPools.length > 0)
+          await writeLocalStorage("ArknightsCardInformationB", this.merge(dataLoader.bilibiliPools, await readLocalStorage("ArknightsCardInformationB")));
+        if (dataLoader.officialStones.length > 0)
+          await writeLocalStorage("StoneOfficial", this.merge(dataLoader.officialStones, await readLocalStorage("StoneOfficial")));
+        if (dataLoader.bilibiliStones.length > 0)
+          await writeLocalStorage("StoneBilibili", this.merge(dataLoader.bilibiliStones, await readLocalStorage("StoneBilibili")));
+        if (dataLoader.officialRecharge.length > 0)
+          await writeLocalStorage("RechargeOfficial", this.merge(dataLoader.officialRecharge, await readLocalStorage("RechargeOfficial")));
+        if (dataLoader.bilibiliRecharge.length > 0)
+          await writeLocalStorage("RechargeBilibili", this.merge(dataLoader.bilibiliRecharge, await readLocalStorage("RechargeBilibili")));
+        Notify.create({
+          type: 'positive',
+          message: `数据导入完成: ${dataLoader.summary()}`
+        });
+      } catch (e) {
+        Notify.create({
+          type: 'error',
+          message: '导入数据失败，请检查文件是否正确' + e
+        })
+      }
+    },
+    merge(data, prevData) {
+      let local = prevData;
       local = local !== null ? local : [];
       let changed = 0;
       if (this.checkStructure(local)) {
@@ -149,7 +156,7 @@ export default {
           changed++;
         }
       }
-      return [local, changed];
+      return local;
     },
     download(url, name) {
       const a = document.createElement('a')

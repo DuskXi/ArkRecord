@@ -1,21 +1,15 @@
 <template>
   <q-dialog v-model="dialog" persistent>
     <q-card style="width: 1500px; max-width: 90vw;">
-      <q-card-section>
+      <q-card-section class="row items-center q-pb-none">
         <div class="text-h6">设置</div>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
 
       <q-card-section class="q-pt-none q-pa-md">
-
         <q-list padding bordered class="rounded-borders">
-          <q-expansion-item
-            dense
-            dense-toggle
-            expand-separator
-            icon="wallpaper"
-            label="背景设置"
-            :default-opened="true"
-          >
+          <q-expansion-item dense dense-toggle expand-separator icon="wallpaper" label="背景设置" :default-opened="true">
             <q-card>
               <q-card-section>
                 <q-file v-model="files" label="点击加载本地图片" filled multiple style=""/>
@@ -29,7 +23,9 @@
                 <div class="text-h5 vertical-middle">背景库:</div>
                 <q-carousel :swipeable="$q.platform.has.touch" :vertical="!$q.platform.has.touch" v-model="slide" @mousewheel.prevent="handleScroll($event, false)"
                             :ratio="16/9" :animated="true" :thumbnails="true" style="height: 60vh">
-                  <q-carousel-slide v-for="(value, i) in imageList" :key="i" :name="i" :img-src="value['base64']"/>
+                  <q-carousel-slide v-for="(value, i) in imageList" :key="i" :name="i" :img-src="value['thumbnails']">
+                    <q-badge color="orange" class="absolute-top-right" style="margin-top: 20px; margin-right: 20px;">{{ sizeToString(value.size) }}</q-badge>
+                  </q-carousel-slide>
                 </q-carousel>
                 <q-btn v-if="imageList.length > 0" color="warning" class="full-width" style="margin-top: 20px;" label="移除当前图片" @click="removeImage"/>
                 <q-btn v-if="imageList.length > 0" color="primary" class="full-width" style="margin-top: 20px;" label="设置为主背景" @click="setToMainBackground"/>
@@ -52,8 +48,7 @@
 
 <script>
 import global from "src/utils/largeFileStorage";
-import {readLocalStorage, writeLocalStorage} from "src/utils/storage";
-import {ref} from 'vue'
+import {writeLocalStorage} from "src/utils/storage";
 
 export default {
   name: "SettingManager",
@@ -69,6 +64,9 @@ export default {
   methods: {
     async loadImageList() {
       this.imageList = await global.storage.read();
+      for (let i = 0; i < this.imageList.length; i++) {
+        this.imageList[i]['thumbnails'] = await this.getThumbnails(this.imageList[i]['base64']);
+      }
     },
     removeTemp() {
       this.imageListTemp.splice(this.slideTemp, 1);
@@ -83,21 +81,21 @@ export default {
         this.imageList.push(temp);
       }
     },
-    async removeImage(){
+    async removeImage() {
+      await global.storage.remove(this.imageList[this.slide].name);
       this.imageList.splice(this.slide, 1);
       if (this.imageList.length === this.slide)
         this.slide = this.imageList.length - 1;
-      await global.storage.remove(this.imageList[this.slide].name);
     },
-    async setToMainBackground(){
+    async setToMainBackground() {
       await writeLocalStorage('mainBackground', this.imageList[this.slide].name);
       global.callListeners();
     },
-    async setToTimeLineBackground(){
+    async setToTimeLineBackground() {
       await writeLocalStorage('timeLineBackground', this.imageList[this.slide].name);
       global.callListeners();
     },
-    async cleanTimeLineBackground(){
+    async cleanTimeLineBackground() {
       await writeLocalStorage('timeLineBackground', null);
       global.callListeners();
     },
@@ -109,6 +107,22 @@ export default {
         reader.onerror = error => reject(error)
       })
     },
+    async getThumbnails(base64, maxWidth = 1280, maxHeight = 720) {
+      let img = new Image();
+      img.src = base64;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      let rate = Math.min(img.width / maxWidth, img.height / maxHeight);
+      let canvas = document.createElement("canvas");
+      let w = img.width / rate;
+      let h = img.height / rate;
+      canvas.setAttribute("width", w);
+      canvas.setAttribute("height", h);
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      return canvas.toDataURL("image/jpg");
+    },
     handleScroll(e, temp = false) {
       let direction = e.deltaY > 0 ? 'down' : 'up';
       let result = temp ? this.slideTemp : this.slide;
@@ -117,7 +131,7 @@ export default {
         if (result < length - 1)
           result++;
         else
-          result= 0;
+          result = 0;
       if (direction === 'up' && e.deltaY <= -125)
         if (result !== 0)
           result -= 1;
@@ -127,6 +141,15 @@ export default {
         this.slideTemp = result;
       else
         this.slide = result;
+    },
+    sizeToString(size) {
+      let unit = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+      let i = 0;
+      while (size > 1024) {
+        size /= 1024;
+        i++;
+      }
+      return size.toFixed(2) + ' ' + unit[i];
     }
   },
   mounted() {
@@ -148,6 +171,9 @@ export default {
           name: val[i].name,
           size: val[i].size,
         });
+      }
+      for (let i = 0; i < this.imageListTemp.length; i++) {
+        this.imageListTemp[i]['thumbnails'] = await this.getThumbnails(this.imageListTemp[i]['base64']);
       }
     }
   }
