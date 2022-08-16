@@ -264,7 +264,8 @@ class Arknights {
     let localData = await readLocalStorage(keyPoolData);
     if (localData === null)
       localData = [];
-    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0).timestamp;
+    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0);
+    currentLastTimestamp = currentLastTimestamp ? currentLastTimestamp.timestamp : 0;
     let serverData = await this.requestPoolData(connector, currentLastTimestamp, strongLoading);
     let [merged, difference] = await this.mergeData(localData, serverData);
     await writeLocalStorage(keyPoolData, merged);
@@ -275,9 +276,9 @@ class Arknights {
     let localData = await readLocalStorage(keyStone);
     if (localData === null)
       localData = [];
-    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0).timestamp;
+    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0);
+    currentLastTimestamp = currentLastTimestamp ? currentLastTimestamp.timestamp : 0;
     let serverData = await this.requestStoneData(connector, currentLastTimestamp, strongLoading);
-
     let [merged, difference] = await this.mergeData(localData, serverData);
     await writeLocalStorage(keyStone, merged);
     return difference;
