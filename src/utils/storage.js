@@ -1,6 +1,4 @@
 
-import {Connector} from 'indexeddb-orm/dist/connection/connector';
-
 async function readLocalStorage(key) {
   return new Promise((resolve, _) => {
     chrome.storage.local.get([key], function (result) {

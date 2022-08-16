@@ -1,6 +1,4 @@
 import {v4 as uuidV4} from 'uuid';
-import {Model} from 'indexeddb-orm/dist/models/model';
-import {Connector} from 'indexeddb-orm/dist/connection/connector';
 
 class LargeFileStorage {
   constructor(dataBaseName = "ArkRecordDataBase", version = 1) {
