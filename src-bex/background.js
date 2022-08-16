@@ -4,6 +4,7 @@ async function updateInformation(feedback, initiative = false) {
   feedback('开始同步数据');
   let arknights = new Arknights();
   feedback('进行身份验证');
+  await arknights.init();
   feedback('官服' + (arknights.officialStatus ? '已登录' : '未登录'));
   feedback('B服' + (arknights.bilibiliStatus ? '已登录' : '未登录'));
   await arknights.init();
