@@ -13,7 +13,7 @@
 
       <q-card-section class="q-pt-none">
         <q-select v-model="messageChoose" :options="messageOptions" label="通讯选择"/>
-        <q-markdown v-if="messageChoose != null && initialized" style="margin-top: 10px">
+        <q-markdown v-if="messageChoose != null && initialized" style="margin-top: 10px" :key="keyMarkdown">
           {{ serverMessages[messageChoose.value].content }}
         </q-markdown>
       </q-card-section>
@@ -40,6 +40,7 @@ export default {
     messageOptions: [],
     messageChoose: null,
     initialized: false,
+    keyMarkdown: new Date().getTime(),
   }),
   methods: {
     async loadMessages() {
@@ -111,16 +112,17 @@ export default {
   },
   watch: {
     messageChoose: {
-      handler(newVal, oldVal) {
+      async handler(newVal, oldVal) {
         if (newVal != null && this.dialog) {
           let message = this.serverMessages[newVal.value];
           if (this.messagesUnread.includes(message.name)) {
             this.messagesUnread.splice(this.messagesUnread.indexOf(message.name), 1);
             this.messagesRead.push(message.name);
-            this.saveMessagesRead();
-            this.init();
+            await this.saveMessagesRead();
+            await this.init();
           }
         }
+        this.keyMarkdown = new Date().getTime();
       },
       deep: true
     }
