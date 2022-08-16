@@ -4,7 +4,7 @@
   </div>
 
   <q-dialog v-model="customDialogModel">
-    <q-card :style="$q.screen.gt.sm? 'width: 60vw;':'width: 95vw;'">
+    <q-card :style="$q.screen.gt.sm? 'width: 1500px; max-width: 75vw;':'width: 95vw;'">
       <q-card-section>
         <div class="text-h6">更新日志</div>
       </q-card-section>
