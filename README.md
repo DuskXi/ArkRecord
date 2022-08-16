@@ -22,12 +22,11 @@
 - [X] 重构 **background.js** 提高可读性
 - [X] ~~在`全部列出`和`纯常驻寻访`中增加图表选项~~(弃置，功能被时间线所替代)``
 
-### 开发中版本预览:
+### 预览:
 
-时间线/PRTS数据分割标准寻访:
+<img width="1902" alt="image" src="https://user-images.githubusercontent.com/84715902/184939203-ea9553eb-70db-43b7-af38-8e632da87513.png">
 
-![image](https://user-images.githubusercontent.com/84715902/183721638-0b5ab947-7895-4ea4-82e5-afd6b33a0e82.png)
-
+<img width="1877" alt="image" src="https://user-images.githubusercontent.com/84715902/184939331-8fdd7121-021d-40fc-b494-b04430dafd27.png">
 
 ---
 
