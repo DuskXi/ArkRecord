@@ -1,6 +1,6 @@
-import {Arknights} from './hypergryphConnect';
+import {Arknights, listLocalStorageKeys, removeLocalStorage} from './hypergryphConnect';
 
-async function updateInformation(feedback) {
+async function updateInformation(feedback, initiative = false) {
   feedback('开始同步数据');
   let arknights = new Arknights();
   feedback('进行身份验证');
@@ -9,10 +9,10 @@ async function updateInformation(feedback) {
   await arknights.init();
   try {
     feedback("同步寻访数据")
-    await arknights.syncPoolData();
+    await arknights.syncPoolData(initiative);
     feedback("寻访数据同步完成")
     feedback("同步源石数据中...")
-    await arknights.syncStoneData();
+    await arknights.syncStoneData(initiative);
     feedback("源石数据同步完成")
     feedback("同步充值数据中...")
     await arknights.syncRechargeData();
@@ -47,41 +47,27 @@ async function reportChanging(count, name, type = 1,) {
   })
 }
 
-function checkStructure(data) {
-  if (!(data instanceof Array)) {
-    return false;
+async function CleanUpHistoricalIssues() {
+  let keys = await listLocalStorageKeys();
+  if (keys.includes("pools")) {
+    await removeLocalStorage("pools");
+    console.log("遗留问题清理完毕");
   }
-  data.forEach(item => {
-    if (typeof (item.pool) == 'string' && typeof (item.timestamp) == 'number' && item.result instanceof Array) {
-      item.result.forEach(element => {
-        if (typeof (element["isNew"]) == 'boolean' && typeof (element.name) == 'string' && typeof (element["rarity"]) == 'number') {
-        } else {
-          return false;
-        }
-      });
-    } else {
-      return false;
-    }
-  });
-  return true;
-}
-
-function getUpdate(count, bilibili) {
-  chrome.notifications.create('DataUpdate', {
-    type: 'basic',
-    iconUrl: '/icons/icon-128x128.png',
-    title: (bilibili ? 'B服数据:' : '') + '有新的抽卡数据更新, 更新了' + count + '条数据',
-    message: '抽卡数据已更新，请刷新页面查看',
-    priority: 2
-  })
 }
 
 function print(message) {
   console.log(message);
 }
 
-updateInformation(print).then(_ => {
-});
+async function main(bridge, connect) {
+  console.log(bridge);
+  console.log(connect);
+  await CleanUpHistoricalIssues();
+  await updateInformation(print);
+}
+
+// main()
+//   .then(() => null);
 
 chrome.runtime.onMessage.addListener(
   async function (request, sender, sendResponse) {
@@ -93,11 +79,11 @@ chrome.runtime.onMessage.addListener(
           if (initiative)
             chrome.runtime.sendMessage({type: "statusUpdate", message: message});
           print(message);
-        })
+        }, true);
       }
       sendResponse({});
     }
   }
 );
 
-export default {}
+export default main;

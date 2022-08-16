@@ -18,12 +18,39 @@ async function writeLocalStorage(key, value) {
   });
 }
 
+async function removeLocalStorage(key) {
+  await new Promise((resolve, _) => {
+    chrome.storage.local.remove([key], () => {
+      resolve();
+    })
+  });
+}
+
+async function listLocalStorageKeys() {
+  return new Promise((resolve, _) => {
+    chrome.storage.local.get(null, function (items) {
+      resolve(Object.keys(items));
+    });
+  });
+}
+
 async function httpGet(url) {
   return await fetch(url, {method: 'GET'});
 }
 
 async function httpPost(url, data) {
   return await fetch(url, {method: 'POST', body: JSON.stringify(data)});
+}
+
+function max(array, compare = (a, b) => a - b > 0) {
+  if (array.length === 0) return null;
+  let maxItem = array[0];
+  for (let i = 1; i < array.length; i++) {
+    if (compare(array[i], maxItem)) {
+      maxItem = array[i];
+    }
+  }
+  return maxItem;
 }
 
 class Connect {
@@ -48,7 +75,7 @@ class Connect {
     this.initialized = true;
   }
 
-  async getPoolData() {
+  async getPoolData(currentLastTimestamp, strongLoading = false) {
     let dataset = [];
     let max = 1;
     for (let i = 1; i <= max; i++) {
@@ -59,11 +86,18 @@ class Connect {
       }
       max = json.data["pagination"].total;
       dataset.push(json.data.list);
+      if (json.data.list.length > 0 && !strongLoading) {
+        let lastTimestamp = json.data.list[json.data.list.length - 1]['ts'];
+        if (lastTimestamp < currentLastTimestamp) {
+          console.log("非强加载，暂停节省资源");
+          break;
+        }
+      }
     }
     return {data: dataset, pages: max};
   }
 
-  async getStoneData() {
+  async getStoneData(currentLastTimestamp, strongLoading = false) {
     let dataset = [];
     let max = 1;
     for (let i = 1; i <= max; i++) {
@@ -74,6 +108,13 @@ class Connect {
       }
       max = json.data["pagination"].total;
       dataset.push(json.data.list);
+      if (json.data.list.length > 0 && !strongLoading) {
+        let lastTimestamp = json.data.list[json.data.list.length - 1]['ts'];
+        if (lastTimestamp < currentLastTimestamp){
+          console.log("非强加载，暂停节省资源");
+          break;
+        }
+      }
     }
     return {data: dataset, pages: max};
   }
@@ -138,10 +179,12 @@ class Arknights {
   /**
    *
    * @param {Connect} connector
+   * @param {number} currentLastTimestamp
+   * @param strongLoading
    * @returns
    */
-  async requestPoolData(connector) {
-    let rawData = await connector.getPoolData();
+  async requestPoolData(connector, currentLastTimestamp, strongLoading = false) {
+    let rawData = await connector.getPoolData(currentLastTimestamp, strongLoading);
     let results = [];
     rawData.data.forEach(group => {
       group.forEach(items => {
@@ -158,10 +201,12 @@ class Arknights {
   /**
    *
    * @param {Connect} connector
+   * @param {number} currentLastTimestamp
+   * @param strongLoading
    * @returns
    */
-  async requestStoneData(connector) {
-    let rawData = await connector.getStoneData();
+  async requestStoneData(connector, currentLastTimestamp, strongLoading = false) {
+    let rawData = await connector.getStoneData(currentLastTimestamp, strongLoading);
     let results = [];
     rawData.data.forEach(group => {
       group.forEach(items => {
@@ -215,24 +260,21 @@ class Arknights {
     return [merged, difference];
   }
 
-  async syncPool(connector, keyPoolData, keyPools) {
+  async syncPool(connector, keyPoolData, keyPools, strongLoading) {
     let localData = await readLocalStorage(keyPoolData);
-    let serverData = await this.requestPoolData(connector);
-    let pools = await readLocalStorage("pools");
+    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0).timestamp;
+    let serverData = await this.requestPoolData(connector, currentLastTimestamp, strongLoading);
     if (localData === null)
       localData = [];
-    if (pools === null)
-      pools = [];
     let [merged, difference] = await this.mergeData(localData, serverData);
     await writeLocalStorage(keyPoolData, merged);
-    merged.forEach(item => pools.push(item.pool));
-    await writeLocalStorage(keyPools, pools);
     return difference;
   }
 
-  async syncStone(connector, keyStone) {
+  async syncStone(connector, keyStone, strongLoading) {
     let localData = await readLocalStorage(keyStone);
-    let serverData = await this.requestStoneData(connector);
+    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0).timestamp;
+    let serverData = await this.requestStoneData(connector, currentLastTimestamp, strongLoading);
     if (localData === null)
       localData = [];
     let [merged, difference] = await this.mergeData(localData, serverData);
@@ -252,23 +294,23 @@ class Arknights {
     return difference;
   }
 
-  async syncPoolData() {
+  async syncPoolData(strongLoading = false) {
     if (this.officialStatus) {
-      this.officialPoolDifference = await this.syncPool(this.official, "ArknightsCardInformation", "pools");
+      this.officialPoolDifference = await this.syncPool(this.official, "ArknightsCardInformation", "pools", strongLoading);
     }
 
     if (this.bilibiliStatus) {
-      this.bilibiliPoolDifference = await this.syncPool(this.bilibili, "ArknightsCardInformationB", "poolsB");
+      this.bilibiliPoolDifference = await this.syncPool(this.bilibili, "ArknightsCardInformationB", "poolsB", strongLoading);
     }
   }
 
-  async syncStoneData() {
+  async syncStoneData(strongLoading = false) {
     if (this.officialStatus) {
-      this.officialStoneDifference = await this.syncStone(this.official, "StoneOfficial");
+      this.officialStoneDifference = await this.syncStone(this.official, "StoneOfficial", strongLoading);
     }
 
     if (this.bilibiliStatus) {
-      this.bilibiliStoneDifference = await this.syncStone(this.bilibili, "StoneBilibili");
+      this.bilibiliStoneDifference = await this.syncStone(this.bilibili, "StoneBilibili", strongLoading);
     }
   }
 
@@ -284,5 +326,9 @@ class Arknights {
 }
 
 export {
-  Arknights
+  Arknights,
+  removeLocalStorage,
+  readLocalStorage,
+  writeLocalStorage,
+  listLocalStorageKeys
 }

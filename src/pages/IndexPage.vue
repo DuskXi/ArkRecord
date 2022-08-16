@@ -2,16 +2,23 @@
   <q-page class="-primary mainBody " :class="$q.screen.gt.sm ? 'flex flex-center': ''">
     <div class="row" :style="$q.screen.gt.sm ? 'width: 65%': ''" :class="$q.screen.gt.sm ? '':'q-px-md'">
       <div class="col-12">
-        <div class="col" style="margin-bottom: 20px;">
+        <div class="col q-pa-sm" style="margin-bottom: 20px;">
           <div class="text-h3 vertical-middle	">ArkRecord
             <q-badge color="primary">{{ version }}</q-badge>
+            <settingManager css="float-right"/>
           </div>
 
           <div class="text-caption vertical-middle"> ArkRecord 不会收集上传你的任何信息数据，所有从鹰角网站获取的数据都只会保存在本地。</div>
         </div>
         <div class="q-gutter-sm">
           <q-badge :color="login?'green':'orange'">官服: {{ login ? '已' : '未' }}登录</q-badge>
+          <a v-if="!login" href="https://ak.hypergryph.com/user/home" target="_blank"> 点击前往
+            <q-icon name="open_in_new"/>
+          </a>
           <q-badge :color="loginB?'green':'orange'">B服: {{ loginB ? '已' : '未' }}登录</q-badge>
+          <a v-if="!loginB" href="https://ak.hypergryph.com/user/bilibili/home" target="_blank"> 点击前往
+            <q-icon name="open_in_new"/>
+          </a>
         </div>
         <div class="q-gutter-sm" v-if="loginB">
           <q-toggle v-model="bilibili" label="B服"/>
@@ -64,6 +71,7 @@ import ScreenShot from "components/functional/ScreenShot.vue";
 import DataManager from "components/functional/DataManager.vue";
 import InformationSet from "components/functional/InformationSet.vue";
 import StoneAndRecharge from "components/tabs/StoneAndRecharge.vue";
+import SettingManager from "components/SettingManager.vue";
 
 export default defineComponent({
   name: "IndexPage",
@@ -76,7 +84,8 @@ export default defineComponent({
     screenShot: ScreenShot,
     dataManager: DataManager,
     informationSet: InformationSet,
-    stoneAndRecharge: StoneAndRecharge
+    stoneAndRecharge: StoneAndRecharge,
+    settingManager: SettingManager
   },
   data: () => ({
     version: config.version,

@@ -8,11 +8,39 @@
 
 <script>
 import {defineComponent, ref} from 'vue'
+import global from "src/utils/largeFileStorage";
+import {readLocalStorage, writeLocalStorage} from "src/utils/storage";
 
 export default defineComponent({
   name: 'MainLayout',
 
   components: {},
+
+  mounted() {
+    console.log(global.storage.objectId);
+    global.listeners.push(this.onBackgroundChange);
+    try {
+      this.onBackgroundChange();
+    } catch (e) {
+      console.log(e);
+      console.log("初始化自定义背景失败");
+      document.body.setAttribute('style', `background: url(/www/background.jpg) no-repeat center fixed; background-size: cover;`);
+    }
+  },
+
+  methods: {
+    changeBackground(base64) {
+      document.body.setAttribute('style', `background: url(${base64}) no-repeat center fixed; background-size: cover;`);
+    },
+    async onBackgroundChange() {
+      let backgroundKey = await readLocalStorage('mainBackground');
+      if (backgroundKey != null) {
+        let result = await global.storage.query(backgroundKey);
+        if (result.length > 0)
+          this.changeBackground(result[0].base64);
+      }
+    }
+  },
 
   setup() {
     const leftDrawerOpen = ref(false)
@@ -55,7 +83,7 @@ export default defineComponent({
   background-color: transparent;
 }
 
-::-webkit-scrollbar-track{
+::-webkit-scrollbar-track {
   background-color: transparent;
 }
 

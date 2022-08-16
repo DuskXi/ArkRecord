@@ -1,3 +1,6 @@
+
+import {Connector} from 'indexeddb-orm/dist/connection/connector';
+
 async function readLocalStorage(key) {
   return new Promise((resolve, _) => {
     chrome.storage.local.get([key], function (result) {
@@ -34,5 +37,13 @@ async function readAllLocalStorage() {
   });
 }
 
+async function removeLocalStorage(key) {
+  await new Promise((resolve, _) => {
+    chrome.storage.local.remove([key], () => {
+      resolve();
+    })
+  });
+}
 
-export {readLocalStorage, writeLocalStorage, listLocalStorageKeys, readAllLocalStorage};
+
+export {readLocalStorage, writeLocalStorage, listLocalStorageKeys, readAllLocalStorage, removeLocalStorage};

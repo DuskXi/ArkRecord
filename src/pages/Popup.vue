@@ -1,32 +1,57 @@
 <template>
-  <q-page class="flex flex-center">
-    <q-btn style="margin-top:20px;margin-bottom:20px;" color="primary" icon="info" label="查看详细数据" @click="gotoInformationPage">
-      <q-badge color="orange" v-if="hasNew">有更新！</q-badge>
-    </q-btn>
-    <q-markup-table>
-      <thead>
-      <tr>
-        <th class="text-left">#</th>
-        <th class="text-right">干员类型</th>
-        <th class="text-right">出货概率</th>
-        <th class="text-right">平均重复率</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr v-for="info in totalInfos" :key="info.id">
-        <td class="text-left">{{ info.id }}</td>
-        <td class="text-right">{{ info.type }}</td>
-        <td class="text-right">{{ (info.probability * 100).toFixed(4) }}%</td>
-        <td class="text-right">{{ (info.repetition * 100).toFixed(4) }}%</td>
-      </tr>
-      </tbody>
-    </q-markup-table>
-    <div class="q-gutter-sm">
-      <q-badge :color="loginO?'green':'orange'">官服: {{ loginO ? '已' : '未' }}登录</q-badge>
-      <q-badge :color="loginB?'green':'orange'">B服: {{ loginB ? '已' : '未' }}登录</q-badge>
+  <q-page class="">
+    <div class="column items-center">
+      <div class="col items-center">
+        <q-btn style="margin-top:20px;margin-bottom:20px;" color="primary" icon="info" label="查看详细数据" @click="gotoInformationPage">
+          <q-badge color="orange" v-if="hasNew">有更新！</q-badge>
+        </q-btn>
+      </div>
+      <div class="col items-center">
+        <q-markup-table>
+          <thead>
+          <tr>
+            <th class="text-left">#</th>
+            <th class="text-right">干员类型</th>
+            <th class="text-right">出货概率</th>
+            <th class="text-right">平均重复率</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="info in totalInfos" :key="info.id">
+            <td class="text-left">{{ info.id }}</td>
+            <td class="text-right">{{ info.type }}</td>
+            <td class="text-right">{{ (info.probability * 100).toFixed(4) }}%</td>
+            <td class="text-right">{{ (info.repetition * 100).toFixed(4) }}%</td>
+          </tr>
+          </tbody>
+        </q-markup-table>
+      </div>
+      <div class="col items-center">
+        <div class="row" style="margin-top: 20px">
+          <div class="col-6 items-center">
+            <div class="row">
+              <q-badge :color="loginO?'green':'orange'">官服: {{ loginO ? '已' : '未' }}登录</q-badge>
+              <div class="flex-break"></div>
+              <a v-if="!loginO" href="https://ak.hypergryph.com/user/home" target="_blank"> 点击前往
+                <q-icon name="open_in_new"/>
+              </a>
+            </div>
+          </div>
+          <div class="col-6 items-center">
+            <div class="row">
+              <q-badge :color="loginB?'green':'orange'">B服: {{ loginB ? '已' : '未' }}登录</q-badge>
+              <div class="flex-break"></div>
+              <a v-if="!loginB" href="https://ak.hypergryph.com/user/bilibili/home" target="_blank"> 点击前往
+                <q-icon name="open_in_new"/>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="text-h6 vertical-middle" style="color: red; margin-top: 20px;margin-bottom: 20px;" v-if="!login">鹰角网站未登录</div>
+        <q-btn style="width: 100%; margin-bottom: 20px;" color="primary" label="点击刷新数据" @click="update"/>
+      </div>
     </div>
-    <div class="text-h6 vertical-middle" style="color: red; margin-top: 20px;margin-bottom: 20px;" v-if="!login">鹰角网站未登录</div>
-    <q-btn color="primary" style="margin-top: 20px; margin-bottom: 20px;" label="点击刷新数据" @click="update"/>
+
   </q-page>
 </template>
 

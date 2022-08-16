@@ -8,6 +8,8 @@
     <q-toggle v-if="!disableThumbnail" v-model="noRepeat" label="去重"/>
     <q-toggle v-if="generalizeStar3 || generalizeStar34 || generalizeStar345" v-model="disableThumbnail" label="不显示折叠的图片"/>
     <q-toggle v-if="generalizeStar3 || generalizeStar34 || generalizeStar345" v-model="disableList" label="折叠干员名单"/>
+    <q-toggle v-if="!print" v-model="enableBackground" label="启用自定义背景"/>
+    <q-toggle v-if="print || enableBackground" v-model="repeatBackground" label="重复背景"/>
     <q-toggle v-model="print" label="启用截图"/>
     <screen-shot v-if="print" label="点击截图(全屏)" :key="screenShotKey"/>
     <screen-shot v-if="print" label="点击截图(仅限时间线)" :element="getTimeLineElement()" :key="screenShotKey"/>
@@ -25,65 +27,70 @@
     <q-btn color="warning" label="强制刷新图片数据" @click="forceRefresh"/>
   </div>
   <div :style="mainBodyStyle">
-    <q-timeline :layout="$q.screen.lt.sm ? 'dense' : ($q.screen.lt.md ? 'comfortable' : 'loose')" color="secondary" id="timeline">
-      <q-timeline-entry v-if="pool != null" heading>
-        {{ pool.name }} 时间线
-      </q-timeline-entry>
+    <div :style="backgroundStyle" id="timeline">
+      <q-timeline :layout="$q.screen.lt.sm ? 'dense' : ($q.screen.lt.md ? 'comfortable' : 'loose')" color="secondary" :style="timeLineStyle">
+        <q-timeline-entry v-if="pool != null" heading>
+          {{ pool.name }} 时间线
+        </q-timeline-entry>
 
-      <q-timeline-entry
-        :title=" (item.type === 'single' ? item.star : item.type)  +'星'"
-        :subtitle="item.type === 'single' ? item.date.toLocaleString() : item.date[0].toLocaleString() + ' - ' + item.date[1].toLocaleString()"
-        :color="item.color"
-        v-for="(item, index) in line"
-        :key="index"
-      >
-        <div>
-          <div class="text-h5 vertical-middle">第 <span class="text-red-8">{{ item.count }}</span> 抽 {{ item.type !== 'single' ? `(共${item.number}个干员)` : '' }}</div>
-          <div class="text-h5 vertical-middle">
-            <span v-if="item.type === 'single'"> {{ item.character }} </span>
-            <q-badge color="red" v-if="item.isNew">New!</q-badge>
-            <span v-if="item.type === 'single' || disableList"></span>
-            <span v-else v-for="(star, char, index) in item.characterNoRepeat" :key="index">
+        <q-timeline-entry
+          :title=" (item.type === 'single' ? item.star : item.type)  +'星'"
+          :subtitle="item.type === 'single' ? item.date.toLocaleString() : item.date[0].toLocaleString() + ' - ' + item.date[1].toLocaleString()"
+          :color="item.color"
+          v-for="(item, index) in line"
+          :key="index">
+          <div>
+            <div class="text-h5 vertical-middle">第 <span class="text-red-8">{{ item.count }}</span> 抽 {{ item.type !== 'single' ? `(共${item.number}个干员)` : '' }}</div>
+            <div class="text-h5 vertical-middle">
+              <span v-if="item.type === 'single'"> {{ item.character }} </span>
+              <q-badge color="red" v-if="item.isNew">New!</q-badge>
+              <span v-if="item.type === 'single' || disableList"></span>
+              <span v-else v-for="(star, char, index) in item.characterNoRepeat" :key="index">
               <span :class="star === 3 ? 'text-teal-6' : (star === 4 ? 'text-purple-6' : 'text-amber-7')">{{ char }}</span>,
             </span>
-          </div>
-          <q-intersection v-if="!print">
-            <q-img loading="lazy" v-if="Object.keys(characterInfo).length > 0 && item.type === 'single'"
-                   :src="characterInfo[item.character].image"
-                   spinner-color="white" style="height: 120px; max-width: 120px">
-              <div class="absolute-bottom text-subtitle6 text-center q-pa-xs">
-                <div class="absolute-top" style="transform: scale(0.8);"> {{ item.starStr }}</div>
-              </div>
-            </q-img>
-            <div v-if="!disableThumbnail && item.type !== 'single' && Object.keys(characterInfo).length > 0">
-              <q-img v-for="(character, index) in item.characters"
-                     :key="character" :ref="item.images[index]"
-                     :src="item.images[index]"
-                     pinner-color="white" style="height: 100px; max-width: 100px">
-                <div class="absolute-bottom text-center q-pa-xs" style="">
-                  <div class="absolute-top"  style="transform: scale(0.8)"> {{ item.stars[index] }}</div>
+            </div>
+            <q-intersection v-if="!print">
+              <q-img loading="lazy" v-if="Object.keys(characterInfo).length > 0 && item.type === 'single'"
+                     :src="characterInfo[item.character].image"
+                     spinner-color="white" style="height: 120px; max-width: 120px">
+                <div class="absolute-bottom text-subtitle6 text-center q-pa-xs">
+                  <div class="absolute-top" style="transform: scale(0.8);"> {{ item.starStr }}</div>
                 </div>
               </q-img>
-            </div>
-          </q-intersection>
-          <div v-else>
-            <q-img v-if="Object.keys(characterInfo).length > 0 && item.type === 'single'"
-                   :src="characterInfo[item.character].image"
-                   spinner-color="white" style="height: 120px; max-width: 120px;">
-              <div class="absolute-bottom text-subtitle6 text-center q-pa-xs" style=""><div class="absolute-top"  style="transform: scale(0.8)"> {{ item.starStr }}</div></div>
-            </q-img>
-            <div v-if="!disableThumbnail && item.type !== 'single' && Object.keys(characterInfo).length > 0">
-              <q-img v-for="(character, index) in item.characters"
-                     :key="character" :ref="item.images[index]"
-                     :src="item.images[index]"
-                     pinner-color="white" style="height: 100px; max-width: 100px">
-                <div class="absolute-bottom text-center q-pa-xs" style=""><div class="absolute-top"  style="transform: scale(0.8)"> {{ item.stars[index] }}</div></div>
+              <div v-if="!disableThumbnail && item.type !== 'single' && Object.keys(characterInfo).length > 0">
+                <q-img v-for="(character, index) in item.characters"
+                       :key="character" :ref="item.images[index]"
+                       :src="item.images[index]"
+                       pinner-color="white" style="height: 100px; max-width: 100px">
+                  <div class="absolute-bottom text-center q-pa-xs" style="">
+                    <div class="absolute-top" style="transform: scale(0.8)"> {{ item.stars[index] }}</div>
+                  </div>
+                </q-img>
+              </div>
+            </q-intersection>
+            <div v-else>
+              <q-img v-if="Object.keys(characterInfo).length > 0 && item.type === 'single'"
+                     :src="characterInfo[item.character].image"
+                     spinner-color="white" style="height: 120px; max-width: 120px;">
+                <div class="absolute-bottom text-subtitle6 text-center q-pa-xs" style="">
+                  <div class="absolute-top" style="transform: scale(0.8)"> {{ item.starStr }}</div>
+                </div>
               </q-img>
+              <div v-if="!disableThumbnail && item.type !== 'single' && Object.keys(characterInfo).length > 0">
+                <q-img v-for="(character, index) in item.characters"
+                       :key="character" :ref="item.images[index]"
+                       :src="item.images[index]"
+                       pinner-color="white" style="height: 100px; max-width: 100px">
+                  <div class="absolute-bottom text-center q-pa-xs" style="">
+                    <div class="absolute-top" style="transform: scale(0.8)"> {{ item.stars[index] }}</div>
+                  </div>
+                </q-img>
+              </div>
             </div>
           </div>
-        </div>
-      </q-timeline-entry>
-    </q-timeline>
+        </q-timeline-entry>
+      </q-timeline>
+    </div>
   </div>
 </template>
 
@@ -91,7 +98,9 @@
 import {Pool} from "src/utils/data";
 import {syncCharactersInformation} from "src/utils/CharacterInfo";
 import ScreenShot from "components/functional/ScreenShot.vue";
+import global from "src/utils/largeFileStorage";
 import {Notify} from "quasar";
+import {readLocalStorage} from "src/utils/storage";
 
 export default {
   name: "TimeLine",
@@ -231,10 +240,39 @@ export default {
       });
       this.update();
       this.generalize()
+    },
+    async onBackgroundChange() {
+      let backgroundKey = await readLocalStorage('timeLineBackground');
+      if (backgroundKey != null && this.enableBackground) {
+        let result = await global.storage.query(backgroundKey);
+        if (result.length > 0) {
+          if (this.repeatBackground)
+            this.backgroundStyle = `background: url(${result[0].base64}) top; background-size: none; background-repeat: repeat-y;`;
+          else
+            this.backgroundStyle = `background: url(${result[0].base64}) no-repeat top; background-size: cover;`;
+          this.timeLineStyle = "background-color: rgba(250,250,250,0.4);";
+        }
+      } else {
+        this.backgroundStyle = "background-color: rgba(255,255,255,0)"
+        this.timeLineStyle = "";
+      }
     }
   },
   async mounted() {
     this.screenShotKey = new Date().getTime();
+    console.log(global.storage.objectId);
+    global.listeners.push(this.onBackgroundChange);
+    try {
+      await this.onBackgroundChange();
+    } catch (e) {
+      console.log(e);
+      console.log("初始化自定义时间线背景失败");
+      this.backgroundStyle = "background-color: rgba(255,255,255,0)"
+      this.timeLineStyle = "";
+    }
+  },
+  async beforeUnmount() {
+    global.listeners.splice(global.listeners.indexOf(this.onBackgroundChange), 1);
   },
   props: {
     pool: {
@@ -282,7 +320,15 @@ export default {
       if (val)
         this.mainBodyStyle = "";
       else
-        this.mainBodyStyle = "overflow-x:hidden; overflow-y:scroll; max-height: 60vh";
+        this.mainBodyStyle = "overflow-x:hidden; overflow-y:scroll; max-height: 60vh;";
+      this.enableBackground = true;
+      this.onBackgroundChange();
+    },
+    repeatBackground() {
+      this.onBackgroundChange();
+    },
+    enableBackground() {
+      this.onBackgroundChange();
     },
     reserve() {
       this.generalize();
@@ -296,10 +342,14 @@ export default {
     generalizeStar3: false,
     disableList: false,
     noRepeat: true,
+    repeatBackground: false,
+    enableBackground: false,
     disableThumbnail: false,
     print: false,
     screenShotKey: new Date().getTime(),
-    mainBodyStyle: "overflow-x:hidden; overflow-y:scroll; max-height: 60vh",
+    mainBodyStyle: "overflow-x:hidden; overflow-y:scroll; max-height: 60vh;",
+    backgroundStyle: "background-color: rgba(255,255,255,0)",
+    timeLineStyle: "",
     reserve: false,
   }),
 }
