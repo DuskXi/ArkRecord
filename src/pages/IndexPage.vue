@@ -5,6 +5,7 @@
         <div class="col q-pa-sm" style="margin-bottom: 20px;">
           <div class="text-h3 vertical-middle	">ArkRecord
             <q-badge color="primary">{{ version }}</q-badge>
+            <author-message/>
             <settingManager css="float-right"/>
           </div>
 
@@ -72,6 +73,7 @@ import DataManager from "components/functional/DataManager.vue";
 import InformationSet from "components/functional/InformationSet.vue";
 import StoneAndRecharge from "components/tabs/StoneAndRecharge.vue";
 import SettingManager from "components/SettingManager.vue";
+import AuthorMessage from "components/functional/AuthorMessage.vue";
 
 export default defineComponent({
   name: "IndexPage",
@@ -85,7 +87,8 @@ export default defineComponent({
     dataManager: DataManager,
     informationSet: InformationSet,
     stoneAndRecharge: StoneAndRecharge,
-    settingManager: SettingManager
+    settingManager: SettingManager,
+    authorMessage: AuthorMessage,
   },
   data: () => ({
     version: config.version,
