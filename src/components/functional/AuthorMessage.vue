@@ -90,7 +90,7 @@ export default {
       });
       await this.downloadContent();
       if (this.messageOptions.length > 0)
-        this.messageChoose = this.messageOptions[0];
+        this.messageChoose = this.messageOptions[this.messageOptions.length - 1];
     },
     async onDialogClick() {
       this.dialog = true;
