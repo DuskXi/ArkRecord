@@ -110,7 +110,7 @@ class Connect {
       dataset.push(json.data.list);
       if (json.data.list.length > 0 && !strongLoading) {
         let lastTimestamp = json.data.list[json.data.list.length - 1]['ts'];
-        if (lastTimestamp < currentLastTimestamp){
+        if (lastTimestamp < currentLastTimestamp) {
           console.log("非强加载，暂停节省资源");
           break;
         }
@@ -262,10 +262,10 @@ class Arknights {
 
   async syncPool(connector, keyPoolData, keyPools, strongLoading) {
     let localData = await readLocalStorage(keyPoolData);
-    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0).timestamp;
-    let serverData = await this.requestPoolData(connector, currentLastTimestamp, strongLoading);
     if (localData === null)
       localData = [];
+    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0).timestamp;
+    let serverData = await this.requestPoolData(connector, currentLastTimestamp, strongLoading);
     let [merged, difference] = await this.mergeData(localData, serverData);
     await writeLocalStorage(keyPoolData, merged);
     return difference;
@@ -273,10 +273,11 @@ class Arknights {
 
   async syncStone(connector, keyStone, strongLoading) {
     let localData = await readLocalStorage(keyStone);
-    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0).timestamp;
-    let serverData = await this.requestStoneData(connector, currentLastTimestamp, strongLoading);
     if (localData === null)
       localData = [];
+    let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0).timestamp;
+    let serverData = await this.requestStoneData(connector, currentLastTimestamp, strongLoading);
+
     let [merged, difference] = await this.mergeData(localData, serverData);
     await writeLocalStorage(keyStone, merged);
     return difference;
