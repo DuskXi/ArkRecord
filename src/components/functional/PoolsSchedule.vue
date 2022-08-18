@@ -4,7 +4,7 @@
   <div class="text-h5 vertical-middle">缓存卡池时间数据: {{ countPools }} 个卡池</div>
   <div class="q-gutter-sm">
 
-    <q-badge color="orange" v-if="outOfRange">当前时间已经超过最新卡池的结束时间，可能有更新</q-badge>
+    <q-badge color="orange" v-if="outOfRange">当前时间已经超过最新卡池的结束时间，可能有更新，如果刷新没结果，应该是prts.wiki还没有更新</q-badge>
     <q-badge color="blue" v-for="(value, index) in poolsScheduleYears" :key="index">{{ value }}</q-badge>
     <q-badge color="red" v-for="(value, index) in waitData" :key="index">{{ value }}未拉取数据</q-badge>
     数据来源: <a href="https://prts.wiki/w/卡池一览/常驻标准寻访" class="doc-link">prts.wiki
@@ -51,7 +51,8 @@ export default {
               occupiedDate.push(item.start);
             }
           });
-          this.poolsScheduleYears.push(i);
+          if (!this.poolsScheduleYears.includes(i))
+            continue;
           this.countPools = results.length;
           if (this.waitData.includes(i)) {
             this.waitData.splice(this.waitData.indexOf(i), 1);

@@ -31,6 +31,7 @@
                 <q-btn v-if="imageList.length > 0" color="primary" class="full-width" style="margin-top: 20px;" label="设置为主背景" @click="setToMainBackground"/>
                 <q-btn v-if="imageList.length > 0" color="primary" class="full-width" style="margin-top: 20px;" label="设置为时间线背景" @click="setToTimeLineBackground"/>
                 <q-btn v-if="imageList.length > 0" color="warning" class="full-width" style="margin-top: 20px;" label="清除时间线背景" @click="cleanTimeLineBackground"/>
+                <q-btn v-if="imageList.length > 0" color="warning" class="full-width" style="margin-top: 20px;" label="清除主背景" @click="cleanMainBackground"/>
               </q-card-section>
             </q-card>
           </q-expansion-item>
@@ -97,6 +98,10 @@ export default {
     },
     async cleanTimeLineBackground() {
       await writeLocalStorage('timeLineBackground', null);
+      global.callListeners();
+    },
+    async cleanMainBackground() {
+      await writeLocalStorage('mainBackground', null);
       global.callListeners();
     },
     getBase64(file) {

@@ -317,8 +317,21 @@ function splitNormalPoolsBySchedule(totalPool, schedule) {
       imagesUrls.push(element.imageUrl);
       range.push([start, end]);
     }
-
   });
+  let scheduleLast = 0;
+  schedule.forEach(element => scheduleLast = Math.max(scheduleLast, element.end));
+  if (new Date(scheduleLast) < new Date()) {
+    let pool = new Pool("未解析卡池，PRTS数据未更新");
+    totalPool.records.forEach(record => {
+      if (record.timestamp > scheduleLast && record.pool === "常驻标准寻访")
+        pool.add(record);
+    });
+    if (pool.records.length > 0) {
+      pools.push(pool);
+      imagesUrls.push(element.imageUrl);
+      range.push([new Date(scheduleLast), new Date()]);
+    }
+  }
   return {pools: pools, imagesUrls: imagesUrls, range: range};
 }
 

@@ -38,7 +38,8 @@ export default defineComponent({
         let result = await global.storage.query(backgroundKey);
         if (result.length > 0)
           this.changeBackground(result[0].base64);
-      }
+      } else
+        document.body.setAttribute('style', `background: url(/www/background.jpg) no-repeat center fixed; background-size: cover;`);
     }
   },
 

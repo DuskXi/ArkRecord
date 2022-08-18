@@ -20,6 +20,9 @@
           <a v-if="!loginB" href="https://ak.hypergryph.com/user/bilibili/home" target="_blank"> 点击前往
             <q-icon name="open_in_new"/>
           </a>
+          <q-badge color="blue" v-if="usageInfo.total >= 0">使用者: {{ usageInfo.total }} 个</q-badge>
+          <q-badge color="blue" v-if="usageInfo.day180 >= 0">半年内活跃使用者: {{ usageInfo.day180 }} 个</q-badge>
+          <q-badge color="blue" v-if="usageInfo.day30 >= 0">一个月内活跃使用者: {{ usageInfo.day30 }} 个</q-badge>
         </div>
         <div class="q-gutter-sm" v-if="loginB">
           <q-toggle v-model="bilibili" label="B服"/>
@@ -63,6 +66,7 @@ import config from '../../package.json';
 import {loadPools} from '../utils/data';
 import {readLocalStorage} from '../utils/storage';
 import {defineComponent} from "vue";
+import {Statistic} from "../utils/Usage";
 import ChartShow from "components/tabs/ChartShow.vue";
 import PoolsTable from "components/tabs/PoolsTable.vue";
 import TotalTable from "components/tabs/TotalTable.vue";
@@ -74,6 +78,7 @@ import InformationSet from "components/functional/InformationSet.vue";
 import StoneAndRecharge from "components/tabs/StoneAndRecharge.vue";
 import SettingManager from "components/SettingManager.vue";
 import AuthorMessage from "components/functional/AuthorMessage.vue";
+
 
 export default defineComponent({
   name: "IndexPage",
@@ -102,6 +107,11 @@ export default defineComponent({
     loginB: false,
     containerKey: new Date().getTime(),
     dataUpdated: new Date().getTime(),
+    usageInfo: {
+      total: -1,
+      day30: -1,
+      day180: -1
+    }
   }),
   methods: {
     async loadData() {
@@ -119,6 +129,15 @@ export default defineComponent({
       this.loginB = loginB;
       if (loginB && !login)
         this.bilibili = true;
+    },
+    async syncUsageInfo() {
+      let statistic = new Statistic();
+      await statistic.syncData();
+      this.usageInfo = {
+        total: statistic.activeTotal,
+        day30: statistic.activeDay30,
+        day180: statistic.activeDay180
+      };
     }
   },
   watch: {
@@ -134,6 +153,7 @@ export default defineComponent({
     }
   },
   mounted() {
+    this.syncUsageInfo()
     this.loginCheck()
     this.loadData()
     chrome.storage.local.set({"indexVisited": true});
