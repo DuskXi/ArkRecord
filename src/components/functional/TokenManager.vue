@@ -213,6 +213,8 @@ export default {
         this.showSecret[userInfo.info.uid] = false;
         await global.background.updateSpecify(userInfo, (message) => Notify.create({message: message, color: 'positive', position: 'top', timeout: 2000}), false);
         this.officialTempInfo = {};
+        if (this.rawToken.length === 1)
+          await this.active(this.rawToken[0]);
         return;
       }
       this.$q.notify({
@@ -236,7 +238,6 @@ export default {
           token: this.bilibiliTempToken,
           info: this.bilibiliTempInfo.data,
           active: false,
-
         };
         for (let i = 0; i < this.bilibiliToken.length; i++) {
           if (this.bilibiliToken[i].info.uid === this.bilibiliTempInfo.data.uid) {
@@ -257,6 +258,8 @@ export default {
         this.showSecret[userInfo.info.uid] = false;
         await global.background.updateSpecify(userInfo, (message) => Notify.create({message: message, color: 'positive', position: 'top', timeout: 2000}), false);
         this.bilibiliTempInfo = {};
+        if (this.rawToken.length === 1)
+          await this.active(this.rawToken[0]);
         return;
       }
       this.$q.notify({
