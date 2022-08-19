@@ -40,6 +40,7 @@
                   </div>
                   <q-btn color="primary" label="储存你数据" @click="saveOfficialTokens" :disable="!checkOfficialTokenJson(jsonDataOfficial)||  officialTempInfo.status!==0" :key="officialButton"/>
                   <div class="text-h5">当前官服数据: {{ officialToken.length > 0 ? '' : '无' }}</div>
+                  <div class="text-h6">请注意点击对应的账号以加载数据</div>
                   <q-list bordered separator>
                     <q-item clickable v-ripple v-for="(value,index) in officialToken" :key="index" :active="value.active" active-class="bg-teal-1">
                       <q-item-section avatar>
@@ -87,6 +88,7 @@
                   </div>
                   <q-btn color="primary" label="储存你的数据" @click="saveBilibiliTokens" :disable="!checkBilibiliTokenJson(jsonDataBilibili)&& bilibiliTempInfo.status!==0" :key="bilibiliButton"/>
                   <div class="text-h5">当前B服数据: {{ bilibiliToken.length > 0 ? '' : '无' }}</div>
+                  <div class="text-h6">请注意点击对应的账号以加载数据</div>
                   <q-list bordered separator>
                     <q-item clickable v-ripple v-for="(value,index) in bilibiliToken" :key="index" :active="value.active" active-class="bg-teal-1 text-grey-8">
                       <q-item-section avatar>
