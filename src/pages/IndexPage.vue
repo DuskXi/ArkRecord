@@ -22,24 +22,17 @@
 <!--          </a>-->
 <!--        </div>-->
         <tokenManager :on-active="onActive"/>
-        <div class="q-gutter-sm" v-if="loginB">
-          <q-toggle v-model="bilibili" label="B服"/>
-        </div>
-        <br v-else/>
         <div class="col" style="margin-bottom: 20px;">
           <q-btn-toggle style="margin-bottom: 20px; opacity: .85" spread no-caps rounded unelevated
                         v-model="shownMode" :options="showOptions" class="my-custom-toggle" toggle-color="primary" color="white" text-color="primary"/>
         </div>
-        <div class="col" style="margin-bottom: 20px; " :key="containerKey" v-if="pools.length > 0">
+        <div class="col" style="margin-bottom: 20px; " :key="containerKey">
           <poolsTable v-if="shownMode === '1'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></poolsTable>
           <totalTable v-if="shownMode === '2'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></totalTable>
           <normalSplitTable v-if="shownMode === '3'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></normalSplitTable>
           <chartShow v-if="shownMode === '4'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></chartShow>
           <statisticsAnalyze v-if="shownMode === '5'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></statisticsAnalyze>
           <stoneAndRecharge v-if="shownMode === '6'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"/>
-        </div>
-        <div class="text-h5 vertical-middle	" v-else>
-          无数据, 请从右下角导入或者在登录后点击右下角的刷新按钮
         </div>
         <div class="col" style="margin-bottom: 20px; ">
           <screen-shot></screen-shot>
@@ -109,12 +102,12 @@ export default defineComponent({
   }),
   methods: {
     async loadData() {
-      let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
-      this.poolsDict = loadPools(rawData);
-      this.pools = Object.values(this.poolsDict);
-      this.pools.sort((a, b) => {
-        return b.getLastUpdate() - a.getLastUpdate();
-      });
+      // let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      // this.poolsDict = loadPools(rawData);
+      // this.pools = Object.values(this.poolsDict);
+      // this.pools.sort((a, b) => {
+      //   return b.getLastUpdate() - a.getLastUpdate();
+      // });
     },
     async loginCheck() {
       let login = await readLocalStorage("login");
@@ -130,14 +123,14 @@ export default defineComponent({
   },
   watch: {
     bilibili: function () {
-      this.loadData();
+      // this.loadData();
       this.containerKey = new Date().getTime();
     },
     dataUpdated: function () {
-      console.log("Data Updated");
-      console.log(this);
-      this.loadData();
-      this.containerKey = new Date().getTime();
+      // console.log("Data Updated");
+      // console.log(this);
+      // this.loadData();
+      // this.containerKey = new Date().getTime();
     }
   },
   mounted() {

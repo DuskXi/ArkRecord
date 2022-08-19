@@ -161,6 +161,8 @@ export default {
       if (!this.summaryDataSet)
         this.summaryDataSet = {};
       this.current = await readLocalStorage('active');
+      if(!this.current)
+        this.current = {};
       this.showSecret = {};
       if (tokens != null) {
         this.rawToken = tokens;
