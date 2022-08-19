@@ -1,7 +1,7 @@
 <template>
 
   <div class="q-gutter-xs">
-    <q-btn color="primary" @click="onDialogClick" label="登录管理器"/>
+    <q-btn color="primary" @click="onDialogClick" label="Token管理器"/>
     <q-badge color="primary" :label="current['info']['nickName']" v-if="Object.keys(current).length > 0 "/>
     <q-badge color="green" :label="'uid: '+ current['info']['uid']" v-if="Object.keys(current).length > 0 "/>
     <div class="text-caption row inline" v-if="Object.keys(current).length > 0 && summaryDataSet.hasOwnProperty(`O/${current['info']['uid']}`)">
