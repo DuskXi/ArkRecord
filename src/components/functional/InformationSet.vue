@@ -74,7 +74,7 @@ export default {
             let last_version = await readLocalStorage("lastversion")
             if (last_version == null || last_version === '' || last_version !== this.updateInfo[0].name) {
               await writeLocalStorage("lastversion", this.updateInfo[0].name);
-              this.showUpdateInfo();
+              // this.showUpdateInfo();
             }
           }
         });
@@ -109,8 +109,12 @@ export default {
     }
   },
   async mounted() {
-    await this.getUpdateInfo();
-    this.compareVersion();
+    try {
+      await this.getUpdateInfo();
+      this.compareVersion();
+    } catch {
+
+    }
   },
   data: () => ({
     version: config.version,
@@ -132,8 +136,8 @@ export default {
 }
 </script>
 
-<style >
- .image-container img {
+<style>
+.image-container img {
   max-width: 100%;
 }
 </style>
