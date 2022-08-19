@@ -15,7 +15,8 @@
     <q-toggle v-model="enableImage" label="显示卡池图片" v-if="schedule.length > 0"/>
     <q-toggle v-model="enableNewCharShow" label="显示新增角色"/>
   </div>
-  <q-card style="background-color: rgba(255,255,255, 0.4)">
+  <div class="text-h4" v-if="noData">此页面无相应类型数据</div>
+  <q-card style="background-color: rgba(255,255,255, 0.4)" v-else>
     <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
       <q-tab v-for="(pool, index) in splitPools" :key="index" :name="index" :label="pool.name">
         <q-tooltip>
@@ -72,11 +73,12 @@
 </template>
 
 <script>
-import {readLocalStorage} from "src/utils/storage";
+import {readLocalStorage, UserData} from "src/utils/storage";
 import {buildTotalData, loadPools, splitNormalPools, mergePools, splitNormalPoolsBySchedule} from "src/utils/data";
 import PoolsSchedule from "components/functional/PoolsSchedule.vue";
 import TimeLine from "components/functional/TimeLine.vue";
 import {syncCharactersInformation} from "src/utils/CharacterInfo";
+import async from "async";
 
 export default {
   name: "NormalSplitTable",
@@ -86,7 +88,14 @@ export default {
   },
   methods: {
     async loadData() {
-      let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      let userData = new UserData(await readLocalStorage('active'));
+      await userData.initialize();
+      let rawData = userData.data.poolData; // await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      if (rawData.length === 0) {
+        this.noData = true;
+        console.log(this.noData);
+        return;
+      }
       this.poolsDict = loadPools(rawData, this.allowStandardPool);
       this.pools = Object.values(this.poolsDict);
       this.totalPool = buildTotalData(this.pools);
@@ -150,17 +159,20 @@ export default {
         str += "⭐";
       }
       return str;
+    },
+    async init() {
+      await this.loadData();
+      if (this.splitPools.length > 0) {
+        this.shownTab = 0; //this.splitPools[0].name;
+      }
     }
   },
-  async mounted() {
+  async created() {
     let characterInfo = await syncCharactersInformation();
     characterInfo.forEach(info => {
       this.characterInfo[info.name] = info;
     });
-    await this.loadData();
-    if (this.splitPools.length > 0) {
-      this.shownTab = 0; //this.splitPools[0].name;
-    }
+    await this.init();
   },
   watch: {
     mergeOptions: {
@@ -173,14 +185,18 @@ export default {
       deep: true
     },
     schedule: {
-      handler() {
-        let result = splitNormalPoolsBySchedule(this.totalPool, this.schedule);
-        this.splitPools = result.pools;
-        this.imageUrls = result.imagesUrls;
-        this.ranges = result.range;
-        this.enableImage = true;
-        if (this.splitPools.length > 0) {
-          this.shownTab = 0; //this.splitPools[0].name;
+      async handler() {
+        if (!this.noData) {
+          if(this.totalPool.records.length === 0)
+            await this.init();
+          let result = splitNormalPoolsBySchedule(this.totalPool, this.schedule);
+          this.splitPools = result.pools;
+          this.imageUrls = result.imagesUrls;
+          this.ranges = result.range;
+          this.enableImage = true;
+          if (this.splitPools.length > 0) {
+            this.shownTab = 0; //this.splitPools[0].name;
+          }
         }
       },
       deep: true
@@ -196,7 +212,7 @@ export default {
     shownTab: 0,
     pools: [],
     poolsDict: {},
-    totalPool: null,
+    totalPool: buildTotalData([]),
     splitPools: [],
     mergeOptions: {},
     rawSplitPools: [],
@@ -208,7 +224,8 @@ export default {
     ranges: [],
     enableImage: false,
     enableNewCharShow: true,
-    characterInfo: {}
+    characterInfo: {},
+    noData: false,
   })
 }
 </script>

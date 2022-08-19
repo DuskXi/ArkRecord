@@ -3,7 +3,8 @@ import {api} from "boot/axios";
 import {readLocalStorage, writeLocalStorage} from "./storage.js";
 import * as https from "https";
 
-const url = "https://prts.wiki/api.php?action=parse&format=json&page=干员一览"
+// const url = "https://prts.wiki/api.php?action=parse&format=json&page=干员一览"
+const url = "https://api.kaltsit.dev/prts/api.php?action=parse&format=json&page=干员一览"
 
 async function httpGet(url) {
   return await fetch(url, {method: 'GET'});

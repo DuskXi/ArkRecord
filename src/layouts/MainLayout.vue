@@ -18,13 +18,16 @@ export default defineComponent({
 
   mounted() {
     console.log(global.storage.objectId);
+  },
+
+  created() {
     global.listeners.push(this.onBackgroundChange);
     try {
       this.onBackgroundChange();
     } catch (e) {
       console.log(e);
       console.log("初始化自定义背景失败");
-      document.body.setAttribute('style', `background: url(/www/background.jpg) no-repeat center fixed; background-size: cover;`);
+      document.body.setAttribute('style', `background: url(/background.jpg) no-repeat center fixed; background-size: cover;`);
     }
   },
 
@@ -36,6 +39,7 @@ export default defineComponent({
       let backgroundKey = await readLocalStorage('mainBackground');
       if (backgroundKey != null) {
         let result = await global.storage.query(backgroundKey);
+        console.log(`总耗时: ${new Date().getTime() - global.start}ms`);
         if (result.length > 0)
           this.changeBackground(result[0].base64);
       }
@@ -88,7 +92,7 @@ export default defineComponent({
 }
 
 body {
-  background: url(/www/background.jpg) no-repeat center fixed;
+  background: url(/background.jpg) no-repeat center fixed;
   background-size: cover;
 }
 

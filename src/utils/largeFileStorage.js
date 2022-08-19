@@ -83,7 +83,9 @@ class LargeFileStorage {
   }
 
   async query(key) {
+    let start = new Date().getTime();
     let objectStore = this.db.transaction("ImageStore").objectStore("ImageStore");
+    console.log("耗时: " + (new Date().getTime() - start) + "ms");
     let results = [];
     await new Promise((resolve, reject) => {
       objectStore.openCursor().onsuccess = function (event) {
@@ -127,7 +129,9 @@ class LargeFileStorage {
 }
 
 var storage = new LargeFileStorage();
+storage.query("null");
 var listeners = [];
+var start = new Date().getTime();
 
 function callListeners() {
   listeners.forEach(listener => {
@@ -135,4 +139,4 @@ function callListeners() {
   });
 }
 
-export default {LargeFileStorage, storage, callListeners, listeners};
+export default {LargeFileStorage, storage, callListeners, listeners, start}

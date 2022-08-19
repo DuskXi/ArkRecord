@@ -24,7 +24,8 @@
     </div>
   </div>
   <div class="text-h6" v-if="mainPool !=null">样本数量: {{ getPool().records.length }}</div>
-  <q-markup-table v-if="mainPool !=null" style="background-color: rgba(255,255,255, 0.6)">
+  <div class="text-h4" v-if="noData">此页面无相应类型数据</div>
+  <q-markup-table v-if="mainPool !=null" style="background-color: rgba(255,255,255, 0.6)" >
     <thead>
     <tr>
       <th class="text-center">干员类型</th>
@@ -51,7 +52,7 @@
 </template>
 
 <script>
-import {readLocalStorage} from "src/utils/storage";
+import {readLocalStorage, UserData} from "src/utils/storage";
 import {buildTotalData, loadPools, filterInTime} from "src/utils/data";
 import {ref} from "vue";
 import TimeLine from "components/functional/TimeLine.vue";
@@ -76,7 +77,13 @@ export default {
       }
     },
     async loadData() {
-      let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      let userData = new UserData(await readLocalStorage('active'));
+      await userData.initialize();
+      let rawData = userData.data.poolData; // await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      if (rawData.length === 0) {
+        this.noData = true;
+        return;
+      }
       if (this.enableDateLimiter)
         rawData = filterInTime(rawData, this.start, this.end);
       this.poolsDict = loadPools(rawData);
@@ -129,6 +136,7 @@ export default {
     start: new Date(),
     end: new Date(),
     enableTimeLine: false,
+    noData: false
   }),
 }
 </script>

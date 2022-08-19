@@ -13,9 +13,8 @@
 
       <q-card-section class="q-pt-none">
         <q-select v-model="messageChoose" :options="messageOptions" label="通讯选择"/>
-        <q-markdown v-if="messageChoose != null && initialized" style="margin-top: 10px" :key="keyMarkdown">
-          {{ serverMessages[messageChoose.value].content }}
-        </q-markdown>
+        <Markdown v-if="messageChoose != null && initialized" :source="serverMessages[messageChoose.value].content"
+                  style="margin-top: 10px;max-width: 100%" :html="true" class="image-container"/>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -28,9 +27,13 @@
 <script>
 import {api} from 'src/boot/axios';
 import {readLocalStorage, writeLocalStorage} from "src/utils/storage";
+import Markdown from 'vue3-markdown-it';
 
 export default {
   name: "AuthorMessage",
+  components: {
+    Markdown
+  },
   data: () => ({
     dialog: false,
     messagesRead: [],
@@ -130,6 +133,8 @@ export default {
 }
 </script>
 
-<style scoped>
-
+<style>
+.image-container img {
+  max-width: 100%;
+}
 </style>

@@ -1,4 +1,5 @@
 <template>
+  <div class="text-h4" v-if="noData">此页面无相应类型数据</div>
   <div :class="$q.screen.lt.md?'':'row'">
     <div class="col-sm-12 col-md-6 q-pa-md">
       <q-table :title="`源石记录(${rowsStone.length}条)`" style="background-color: rgba(255,255,255,0.2)" :dense="$q.screen.lt.md"
@@ -82,7 +83,7 @@
 
 <script>
 import config from '../../../package.json';
-import {readLocalStorage} from "src/utils/storage";
+import {readLocalStorage, UserData} from "src/utils/storage";
 import {ref} from "vue";
 import {exportFile} from "quasar";
 
@@ -92,6 +93,7 @@ export default {
   name: "StoneAndRecharge",
   data: () => ({
     version: config.version,
+    noData: false,
     stone: [],
     recharge: [],
     columnsStone: [
@@ -134,9 +136,15 @@ export default {
   },
   methods: {
     async loadData() {
-      let stone = await readLocalStorage(this.bilibili ? "StoneBilibili" : "StoneOfficial");
-      let recharge = await readLocalStorage(this.bilibili ? "RechargeBilibili" : "RechargeOfficial");
-      this.stone = stone != null ? stone : [];
+      let userData = new UserData(await readLocalStorage('active'));
+      await userData.initialize();
+      let stone = userData.data.stoneData; //await readLocalStorage(this.bilibili ? "StoneBilibili" : "StoneOfficial");
+      let recharge = userData.data.rechargeData; //await readLocalStorage(this.bilibili ? "RechargeBilibili" : "RechargeOfficial");
+      if (stone.length === 0 && recharge.length === 0) {
+        this.noData = true;
+        return;
+      }
+      this.stone = stone;
       this.recharge = recharge != null ? recharge : [];
       this.stone.sort((a, b) => a.timestamp - b.timestamp).reverse();
       this.recharge.sort((a, b) => a.timestamp - b.timestamp).reverse();
