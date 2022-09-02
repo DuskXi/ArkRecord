@@ -1,6 +1,6 @@
 import {Arknights, listLocalStorageKeys, removeLocalStorage} from './hypergryphConnect';
 
-async function updateInformation(feedback, initiative = false) {
+async function updateInformation(feedback, initiative = false, realTimeUpdate = (...arg) => null) {
   feedback('开始同步数据');
   let arknights = new Arknights();
   feedback('进行身份验证');
@@ -10,13 +10,13 @@ async function updateInformation(feedback, initiative = false) {
   await arknights.init();
   try {
     feedback("同步寻访数据")
-    await arknights.syncPoolData(initiative);
+    await arknights.syncPoolData(initiative, realTimeUpdate);
     feedback("寻访数据同步完成")
     feedback("同步源石数据中...")
-    await arknights.syncStoneData(initiative);
+    await arknights.syncStoneData(initiative, realTimeUpdate);
     feedback("源石数据同步完成")
     feedback("同步充值数据中...")
-    await arknights.syncRechargeData();
+    await arknights.syncRechargeData(realTimeUpdate);
     feedback("充值数据同步完成")
     feedback("更新状态...")
     await arknights.updateStatus();
@@ -77,10 +77,22 @@ chrome.runtime.onMessage.addListener(
       if (request.Type === "refresh") {
         console.log("收到刷新请求")
         await updateInformation(message => {
-          if (initiative)
-            chrome.runtime.sendMessage({type: "statusUpdate", message: message});
-          print(message);
-        }, true);
+            if (initiative) {
+              chrome.runtime.sendMessage({type: "statusUpdate", message: message});
+            }
+            print(message);
+          }, true,
+          (percentage, index, finished, create = false, name = '', unit= '') => {
+            chrome.runtime.sendMessage({
+              type: "progress",
+              percentage: percentage,
+              index: index,
+              finished: finished,
+              create: create,
+              name: name,
+              unit:unit
+            });
+          });
       }
       sendResponse({});
     }

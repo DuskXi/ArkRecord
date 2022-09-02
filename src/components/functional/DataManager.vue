@@ -31,11 +31,16 @@ export default {
   name: "DataManager",
   methods: {
     refreshData() {
-      chrome.runtime.sendMessage({Type: "refresh", initiative: true}, function () {
+      chrome.runtime.sendMessage({
+        Type: "refresh", initiative: true, realTimeUpdate: (percentage, create = false, title = '') => {
+          return this.$q.notify({group: false, timeout: 0, spinner: true, message: title, caption: '0%', position: 'center', type: 'info'});
+        }
+      }, function () {
         Notify.create({type: 'positive', message: '数据已刷新'})
       });
     },
     registryListener() {
+      var quasarCore = this;
       chrome.runtime.onMessage.addListener(
         function (request, sender, sendResponse) {
           if (request.type === "statusUpdate") {
@@ -44,6 +49,24 @@ export default {
               message: '状态更新: ' + request.message,
               timeout: 5000
             })
+          }
+          if (request.type === "progress") {
+            let create = request.create;
+            let percentage = request.percentage;
+            let name = request.name ? request.name : '';
+            let index = request.index;
+            let finished = request.finished;
+            let unit = request.unit;
+            if (create) {
+              const notification = quasarCore.$q.notify({group: false, timeout: 0, spinner: true, message: `正在同步${name}`, caption: '0%', position: 'center', type: 'info'});
+              quasarCore.notify = (percentage, count, finish) => {
+                notification({caption: `${Math.round(percentage * 100)}% (${count} ${unit})`});
+                if (finish)
+                  notification({icon: 'done', spinner: false, message: '同步完成', timeout: 3500})
+              }
+            } else {
+              quasarCore.notify(percentage, index, finished)
+            }
           }
           sendResponse({});
         }

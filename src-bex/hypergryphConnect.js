@@ -70,14 +70,15 @@ class Connect {
     if (result.status === 200) {
       let json = await result.json();
       this.logged = true;
-      this.token = json.data.token;
+      this.token = json.data.content;
     }
     this.initialized = true;
   }
 
-  async getPoolData(currentLastTimestamp, strongLoading = false) {
+  async getPoolData(currentLastTimestamp, strongLoading = false, realTimeUpdate = (...arg) => null) {
     let dataset = [];
     let max = 1;
+    let index = 1;
     for (let i = 1; i <= max; i++) {
       let data = await httpGet(this.poolDataRequestUrl + `&page=${i}&token=${encodeURIComponent(this.token)}`);
       let json = await data.json();
@@ -85,21 +86,26 @@ class Connect {
         return false;
       }
       max = json.data["pagination"].total;
+      realTimeUpdate(i / max, i + 1);
       dataset.push(json.data.list);
       if (json.data.list.length > 0 && !strongLoading) {
         let lastTimestamp = json.data.list[json.data.list.length - 1]['ts'];
         if (lastTimestamp < currentLastTimestamp) {
           console.log("非强加载，暂停节省资源");
+          realTimeUpdate(1, i + 1, true);
           break;
         }
       }
+      index++;
     }
+    realTimeUpdate(1, index, true);
     return {data: dataset, pages: max};
   }
 
-  async getStoneData(currentLastTimestamp, strongLoading = false) {
+  async getStoneData(currentLastTimestamp, strongLoading = false, realTimeUpdate = (...arg) => null) {
     let dataset = [];
     let max = 1;
+    let index = 1;
     for (let i = 1; i <= max; i++) {
       let data = await httpGet(this.stoneDataRequestUrl + `&page=${i}&token=${encodeURIComponent(this.token)}`);
       let json = await data.json();
@@ -107,21 +113,26 @@ class Connect {
         return false;
       }
       max = json.data["pagination"].total;
+      realTimeUpdate(i / max, i + 1);
       dataset.push(json.data.list);
       if (json.data.list.length > 0 && !strongLoading) {
         let lastTimestamp = json.data.list[json.data.list.length - 1]['ts'];
         if (lastTimestamp < currentLastTimestamp) {
           console.log("非强加载，暂停节省资源");
+          realTimeUpdate(1, i + 1, true);
           break;
         }
       }
+      index++;
     }
+    realTimeUpdate(1, index, true);
     return {data: dataset, pages: max};
   }
 
-  async getRechargeData() {
+  async getRechargeData(realTimeUpdate = (...arg) => null) {
     this.postData.channelToken.token = this.token;
     let data = await httpPost(this.rechargeDataRequestUrl, this.postData);
+    realTimeUpdate(1, 1, true);
     let json = await data.json();
     if (data.status === 200)
       return json.data;
@@ -133,7 +144,7 @@ class Connect {
 class OfficialConnector extends Connect {
   constructor() {
     super();
-    this.tokenRequestUrl = "https://as.hypergryph.com/user/info/v1/token_by_cookie";
+    this.tokenRequestUrl = "https://web-api.hypergryph.com/account/info/hg";
   }
 }
 
@@ -181,10 +192,11 @@ class Arknights {
    * @param {Connect} connector
    * @param {number} currentLastTimestamp
    * @param strongLoading
+   * @param realTimeUpdate
    * @returns
    */
-  async requestPoolData(connector, currentLastTimestamp, strongLoading = false) {
-    let rawData = await connector.getPoolData(currentLastTimestamp, strongLoading);
+  async requestPoolData(connector, currentLastTimestamp, strongLoading = false, realTimeUpdate = (...arg) => null) {
+    let rawData = await connector.getPoolData(currentLastTimestamp, strongLoading, realTimeUpdate);
     let results = [];
     rawData.data.forEach(group => {
       group.forEach(items => {
@@ -203,10 +215,11 @@ class Arknights {
    * @param {Connect} connector
    * @param {number} currentLastTimestamp
    * @param strongLoading
+   * @param realTimeUpdate
    * @returns
    */
-  async requestStoneData(connector, currentLastTimestamp, strongLoading = false) {
-    let rawData = await connector.getStoneData(currentLastTimestamp, strongLoading);
+  async requestStoneData(connector, currentLastTimestamp, strongLoading = false, realTimeUpdate = (...arg) => null) {
+    let rawData = await connector.getStoneData(currentLastTimestamp, strongLoading, realTimeUpdate);
     let results = [];
     rawData.data.forEach(group => {
       group.forEach(items => {
@@ -223,10 +236,11 @@ class Arknights {
   /**
    *
    * @param {Connect} connector
+   * @param realTimeUpdate
    * @returns
    */
-  async requestRechargeData(connector) {
-    let rawData = await connector.getRechargeData();
+  async requestRechargeData(connector, realTimeUpdate = (...arg) => null) {
+    let rawData = await connector.getRechargeData(realTimeUpdate);
     if (rawData === false)
       return false;
     let results = [];
@@ -260,33 +274,33 @@ class Arknights {
     return [merged, difference];
   }
 
-  async syncPool(connector, keyPoolData, keyPools, strongLoading) {
+  async syncPool(connector, keyPoolData, keyPools, strongLoading, realTimeUpdate = (...arg) => null) {
     let localData = await readLocalStorage(keyPoolData);
     if (localData === null)
       localData = [];
     let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0);
     currentLastTimestamp = currentLastTimestamp ? currentLastTimestamp.timestamp : 0;
-    let serverData = await this.requestPoolData(connector, currentLastTimestamp, strongLoading);
+    let serverData = await this.requestPoolData(connector, currentLastTimestamp, strongLoading, realTimeUpdate);
     let [merged, difference] = await this.mergeData(localData, serverData);
     await writeLocalStorage(keyPoolData, merged);
     return difference;
   }
 
-  async syncStone(connector, keyStone, strongLoading) {
+  async syncStone(connector, keyStone, strongLoading, realTimeUpdate = (...arg) => null) {
     let localData = await readLocalStorage(keyStone);
     if (localData === null)
       localData = [];
     let currentLastTimestamp = max(localData, (a, b) => a.timestamp - b.timestamp > 0);
     currentLastTimestamp = currentLastTimestamp ? currentLastTimestamp.timestamp : 0;
-    let serverData = await this.requestStoneData(connector, currentLastTimestamp, strongLoading);
+    let serverData = await this.requestStoneData(connector, currentLastTimestamp, strongLoading, realTimeUpdate);
     let [merged, difference] = await this.mergeData(localData, serverData);
     await writeLocalStorage(keyStone, merged);
     return difference;
   }
 
-  async syncRecharge(connector, keyRecharge) {
+  async syncRecharge(connector, keyRecharge, realTimeUpdate = (...arg) => null) {
     let localData = await readLocalStorage(keyRecharge);
-    let serverData = await this.requestRechargeData(connector);
+    let serverData = await this.requestRechargeData(connector, realTimeUpdate);
     if (serverData === false)
       return false;
     if (localData === null)
@@ -296,33 +310,37 @@ class Arknights {
     return difference;
   }
 
-  async syncPoolData(strongLoading = false) {
+  async syncPoolData(strongLoading = false, realTimeUpdate = (...arg) => null) {
+    realTimeUpdate(0, 0, false, true, '寻访数据', '组');
     if (this.officialStatus) {
-      this.officialPoolDifference = await this.syncPool(this.official, "ArknightsCardInformation", "pools", strongLoading);
+      this.officialPoolDifference = await this.syncPool(this.official, "ArknightsCardInformation", "pools", strongLoading, realTimeUpdate);
     }
 
     if (this.bilibiliStatus) {
-      this.bilibiliPoolDifference = await this.syncPool(this.bilibili, "ArknightsCardInformationB", "poolsB", strongLoading);
+      this.bilibiliPoolDifference = await this.syncPool(this.bilibili, "ArknightsCardInformationB", "poolsB", strongLoading, realTimeUpdate);
+    }
+
+  }
+
+  async syncStoneData(strongLoading = false, realTimeUpdate = (...arg) => null) {
+    realTimeUpdate(0, 0, false, true, '源石数据', '条');
+    if (this.officialStatus) {
+      this.officialStoneDifference = await this.syncStone(this.official, "StoneOfficial", strongLoading, realTimeUpdate);
+    }
+
+    if (this.bilibiliStatus) {
+      this.bilibiliStoneDifference = await this.syncStone(this.bilibili, "StoneBilibili", strongLoading, realTimeUpdate);
     }
   }
 
-  async syncStoneData(strongLoading = false) {
+  async syncRechargeData(realTimeUpdate = (...arg) => null) {
+    realTimeUpdate(0, 0, false, true, '充值数据', '条');
     if (this.officialStatus) {
-      this.officialStoneDifference = await this.syncStone(this.official, "StoneOfficial", strongLoading);
+      this.officialRechargeDifference = await this.syncRecharge(this.official, "RechargeOfficial", realTimeUpdate);
     }
 
     if (this.bilibiliStatus) {
-      this.bilibiliStoneDifference = await this.syncStone(this.bilibili, "StoneBilibili", strongLoading);
-    }
-  }
-
-  async syncRechargeData() {
-    if (this.officialStatus) {
-      this.officialRechargeDifference = await this.syncRecharge(this.official, "RechargeOfficial");
-    }
-
-    if (this.bilibiliStatus) {
-      // this.bilibiliRechargeDifference = await this.syncRecharge(this.bilibili, "RechargeBilibili");
+      // this.bilibiliRechargeDifference = await this.syncRecharge(this.bilibili, "RechargeBilibili",realTimeUpdate);
     }
   }
 }
