@@ -1,4 +1,4 @@
-# ArkRecord (Base on Quasar)
+# ArkRecord (Base on Quasar) [![wakatime](https://wakatime.com/badge/user/23381c4b-372b-46eb-b687-994db38af858/project/4c484c69-c10e-4944-8b01-72c8a57a0c92.svg)](https://wakatime.com/badge/user/23381c4b-372b-46eb-b687-994db38af858/project/4c484c69-c10e-4944-8b01-72c8a57a0c92)
 
 ## 完成度列表(TODO List):
 
