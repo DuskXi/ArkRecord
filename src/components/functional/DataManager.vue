@@ -18,41 +18,37 @@
       </q-list>
     </q-btn-dropdown>
   </q-btn-group>
-  <input type="file" style="visibility: hidden" id="uploader" @change="fileLoaded()">
+  <input type="file" style="visibility: hidden" id="uploader" @change="fileLoaded()" :key="uploadKey">
 </template>
 
 <script>
 import {Notify, exportFile} from "quasar";
-import {readLocalStorage, listLocalStorageKeys, writeLocalStorage} from "src/utils/storage";
+import {readLocalStorage, listLocalStorageKeys, writeLocalStorage, UserData} from "src/utils/storage";
 import {loadPools, buildTotalData} from "src/utils/data";
-import {DataLoader} from "src/utils/DataLoader";
+import global from "src/utils/hypergryphConnect";
+import {DataLoader, DataLoaderPrev, DataPackage} from "src/utils/DataLoader";
 
 export default {
   name: "DataManager",
   methods: {
     refreshData() {
-      chrome.runtime.sendMessage({Type: "refresh", initiative: true}, function () {
-        Notify.create({type: 'positive', message: '数据已刷新'})
-      });
+      global.background.updateInformation((message) => {
+        Notify.create({
+          message: message,
+          color: 'positive',
+          position: 'top',
+          timeout: 2000
+        });
+      }, false);
     },
     registryListener() {
-      chrome.runtime.onMessage.addListener(
-        function (request, sender, sendResponse) {
-          if (request.type === "statusUpdate") {
-            Notify.create({
-              type: 'positive',
-              message: '状态更新: ' + request.message,
-              timeout: 5000
-            })
-          }
-          sendResponse({});
-        }
-      );
+      // alert("注册");
     },
     async exportData(type) {
       let dataLoader = await this.loadData();
+      let dataPackage = await this.loadDataPackage();
       if (type === 'json') {
-        let content = dataLoader.toJson();
+        let content = dataPackage.toJson();
         let currentTime = new Date();
         let timeString = `${currentTime.toLocaleDateString()} ${currentTime.toLocaleTimeString()}`;
         timeString = timeString.replace(/\//g, '-').replace(/:/g, '-');
@@ -83,20 +79,26 @@ export default {
     },
     async loadData() {
       let dataLoader = new DataLoader();
-      let keys = await listLocalStorageKeys();
-      if (keys.includes("ArknightsCardInformation"))
-        dataLoader.officialPools = await readLocalStorage("ArknightsCardInformation");
-      if (keys.includes("ArknightsCardInformationB"))
-        dataLoader.bilibiliPools = await readLocalStorage("ArknightsCardInformationB");
-      if (keys.includes("StoneOfficial"))
-        dataLoader.officialStones = await readLocalStorage("StoneOfficial");
-      if (keys.includes("StoneBilibili"))
-        dataLoader.bilibiliStones = await readLocalStorage("StoneBilibili");
-      if (keys.includes("RechargeOfficial"))
-        dataLoader.officialRecharge = await readLocalStorage("RechargeOfficial");
-      if (keys.includes("RechargeBilibili"))
-        dataLoader.bilibiliRecharge = await readLocalStorage("RechargeBilibili");
+      let active = await readLocalStorage('active');
+      let userData = new UserData(active);
+      await userData.initialize();
+      dataLoader.pool = userData.data.poolData;
+      dataLoader.stone = userData.data.stoneData;
+      dataLoader.recharge = userData.data.rechargeData;
       return dataLoader;
+    },
+    async loadDataPackage() {
+      let dataPackage = new DataPackage();
+      let dataSet = await readLocalStorage("UserDataSet");
+      for (let key of Object.keys(dataSet)) {
+        let data = dataSet[key];
+        let dataLoader = new DataLoader(1);
+        dataLoader.pool = data.poolData;
+        dataLoader.stone = data.stoneData;
+        dataLoader.recharge = data.rechargeData;
+        dataPackage.loaders.push({dataLoader: dataLoader, userInfo: data.userInfo});
+      }
+      return dataPackage;
     },
     uploadData() {
       document.getElementById("uploader").click();
@@ -114,30 +116,105 @@ export default {
         reader.readAsText(file);
       });
       try {
-        let dataLoader = new DataLoader();
-        dataLoader.load(result);
-        if (dataLoader.officialPools.length > 0)
-          await writeLocalStorage("ArknightsCardInformation", this.merge(dataLoader.officialPools, await readLocalStorage("ArknightsCardInformation")));
-        if (dataLoader.bilibiliPools.length > 0)
-          await writeLocalStorage("ArknightsCardInformationB", this.merge(dataLoader.bilibiliPools, await readLocalStorage("ArknightsCardInformationB")));
-        if (dataLoader.officialStones.length > 0)
-          await writeLocalStorage("StoneOfficial", this.merge(dataLoader.officialStones, await readLocalStorage("StoneOfficial")));
-        if (dataLoader.bilibiliStones.length > 0)
-          await writeLocalStorage("StoneBilibili", this.merge(dataLoader.bilibiliStones, await readLocalStorage("StoneBilibili")));
-        if (dataLoader.officialRecharge.length > 0)
-          await writeLocalStorage("RechargeOfficial", this.merge(dataLoader.officialRecharge, await readLocalStorage("RechargeOfficial")));
-        if (dataLoader.bilibiliRecharge.length > 0)
-          await writeLocalStorage("RechargeBilibili", this.merge(dataLoader.bilibiliRecharge, await readLocalStorage("RechargeBilibili")));
-        Notify.create({
-          type: 'positive',
-          message: `数据导入完成: ${dataLoader.summary()}`
-        });
+        let jsonObject = JSON.parse(result);
+        if (jsonObject.hasOwnProperty("dataBody")) {
+          let dataPackage = new DataPackage()
+          dataPackage.load(result);
+          for (let loader of dataPackage.loaders) {
+            let userInfo = loader.userInfo;
+            let dataLoader = loader.dataLoader;
+            let userData = new UserData(userInfo);
+            await userData.initialize();
+            // let difference = userData.difference(loader.pool, loader.stone, loader.recharge);
+            await userData.save(dataLoader.pool, dataLoader.stone, dataLoader.recharge);
+            Notify.create({
+              type: 'positive',
+              message: `导入数据: ${dataLoader.summary()}`
+            });
+          }
+          Notify.create({
+            type: 'positive',
+            message: `导入完成，一共: ${dataPackage.loaders.length} 个方舟账户数据`
+          });
+        } else {
+          let dataLoader = new DataLoaderPrev(result);
+          let active = await readLocalStorage("active");
+          dataLoader.load(result);
+          Notify.create({
+            type: 'positive',
+            message: `导入的数据为老版本数据文件，没有用户标识，将会自动根据渠道导入当前激活的用户数据集`,
+            timeout: 10000
+          });
+          if (active == null) {
+            Notify.create({
+              type: 'negative',
+              message: `导入文件未标记token与uid，没有激活的用户数据集，请先添加一个明日方舟的账号token`,
+              timeout: 10000
+            });
+            return;
+          }
+          if (dataLoader.hasOfficialData()) {
+            if (active.type === "official") {
+              let userData = new UserData(active);
+              await userData.initialize();
+              await userData.save(dataLoader.officialPools, dataLoader.officialStones, dataLoader.officialRecharge);
+              Notify.create({
+                type: 'positive',
+                message: `导入数据: ${dataLoader.summaryOfficial()}`
+              });
+            } else {
+              Notify.create({
+                type: 'warning',
+                message: `当前导入的数据中有官服数据，但是当前所激活的是B服数据，请到设置中切换后再次导入`,
+                timeout: 7000
+              });
+            }
+          }
+          if (dataLoader.hasBilibiliData()) {
+            if (active.type === "bilibili") {
+              let userData = new UserData(active);
+              await userData.initialize();
+              await userData.save(dataLoader.bilibiliPools, dataLoader.bilibiliStones, dataLoader.bilibiliRecharge);
+              Notify.create({
+                type: 'positive',
+                message: `导入数据: ${dataLoader.summaryBilibili()}`
+              });
+            } else {
+              Notify.create({
+                type: 'warning',
+                message: `当前导入的数据中有B服数据，但是当前所激活的是官服数据，请到设置中切换后再次导入`,
+                timeout: 7000
+              });
+            }
+          }
+        }
+
+
+        // let dataLoader = new DataLoader();
+        // dataLoader.load(result);
+        // if (dataLoader.officialPools.length > 0)
+        //   await writeLocalStorage("ArknightsCardInformation", this.merge(dataLoader.officialPools, await readLocalStorage("ArknightsCardInformation")));
+        // if (dataLoader.bilibiliPools.length > 0)
+        //   await writeLocalStorage("ArknightsCardInformationB", this.merge(dataLoader.bilibiliPools, await readLocalStorage("ArknightsCardInformationB")));
+        // if (dataLoader.officialStones.length > 0)
+        //   await writeLocalStorage("StoneOfficial", this.merge(dataLoader.officialStones, await readLocalStorage("StoneOfficial")));
+        // if (dataLoader.bilibiliStones.length > 0)
+        //   await writeLocalStorage("StoneBilibili", this.merge(dataLoader.bilibiliStones, await readLocalStorage("StoneBilibili")));
+        // if (dataLoader.officialRecharge.length > 0)
+        //   await writeLocalStorage("RechargeOfficial", this.merge(dataLoader.officialRecharge, await readLocalStorage("RechargeOfficial")));
+        // if (dataLoader.bilibiliRecharge.length > 0)
+        //   await writeLocalStorage("RechargeBilibili", this.merge(dataLoader.bilibiliRecharge, await readLocalStorage("RechargeBilibili")));
+        // Notify.create({
+        //   type: 'positive',
+        //   message: `数据导入完成: ${dataLoader.summary()}`
+        // });
       } catch (e) {
         Notify.create({
           type: 'error',
           message: '导入数据失败，请检查文件是否正确' + e
         })
       }
+      this.uploadKey = new Date().getTime();
     },
     merge(data, prevData) {
       let local = prevData;
@@ -198,7 +275,9 @@ export default {
   mounted() {
     this.registryListener();
   },
-  data: () => ({}),
+  data: () => ({
+    uploadKey: new Date().getTime(),
+  }),
   props: {
     dataUpdated: {
       type: Number,

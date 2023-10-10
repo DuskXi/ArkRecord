@@ -22,9 +22,10 @@
 
         <div class="text-h6" v-if="versionType === 'dev'">前软件包版本为 : {{ version }} 小于最新tag版本: {{ updateInfo[0].tag_name }} 或者位数不相符，本版本为开发版本</div>
 
-        <q-markdown v-if="updateInfoChoose != null" style="margin-top: 10px">
-          {{ updateInfo[updateInfoChoose.value].body }}
-        </q-markdown>
+        <div class="row">
+          <Markdown v-if="updateInfoChoose != null" :source="updateInfo[updateInfoChoose.value].body"
+                    style="margin-top: 10px;max-width: 100%" :html="true" class="image-container"/>
+        </div>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -38,10 +39,14 @@
 import {api} from "boot/axios";
 import {ref} from "vue";
 import config from '../../../package.json';
-import {readLocalStorage} from "src/utils/storage";
+import {readLocalStorage, writeLocalStorage} from "src/utils/storage";
+import Markdown from 'vue3-markdown-it';
 
 export default {
   name: "InformationSet",
+  components: {
+    Markdown
+  },
   methods: {
     showUpdateInfo() {
       this.customDialogModel = true;
@@ -68,7 +73,7 @@ export default {
             this.updateInfoChoose = this.updateInfoOptions[0];
             let last_version = await readLocalStorage("lastversion")
             if (last_version == null || last_version === '' || last_version !== this.updateInfo[0].name) {
-              chrome.storage.local.set({"lastversion": this.updateInfo[0].name});
+              await writeLocalStorage("lastversion", this.updateInfo[0].name);
               this.showUpdateInfo();
             }
           }
@@ -116,7 +121,7 @@ export default {
     updateInfoLoading: false,
     versionType: "dev"
   }),
-  watch:{
+  watch: {
     "updateInfoChoose": function (val) {
       if (this.customDialogModel) {
         this.customDialogModel = false;
@@ -127,6 +132,8 @@ export default {
 }
 </script>
 
-<style scoped>
-
+<style >
+ .image-container img {
+  max-width: 100%;
+}
 </style>

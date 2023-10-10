@@ -1,7 +1,7 @@
 import {load} from 'cheerio'
 import {api} from "boot/axios";
 
-const baseUrl = "https://prts.wiki/api.php?action=parse&format=json&page=卡池一览/常驻标准寻访";
+const baseUrl = "https://api.kaltsit.dev/prts/api.php?action=parse&format=json&page=卡池一览/常驻标准寻访";
 
 async function getPoolsSchedule(year) {
   let results = [];

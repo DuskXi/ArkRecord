@@ -5,7 +5,8 @@
     <q-toggle v-model="enableNewCharShow" label="显示新增角色"/>
     <q-toggle v-model="enableTimeLine" label="启用时间线"/>
   </div>
-  <q-card style="background-color: rgba(255,255,255, 0.4)">
+  <div class="text-h4" v-if="noData">此页面无相应类型数据</div>
+  <q-card style="background-color: rgba(255,255,255, 0.4)" v-else>
     <q-tabs v-model="shownTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify" narrow-indicator>
       <q-tab v-for="(pool, index) in pools" :key="index" :name="index" :label="pool.name"/>
     </q-tabs>
@@ -56,7 +57,7 @@
 </template>
 
 <script>
-import {readLocalStorage} from "src/utils/storage";
+import {readLocalStorage, UserData} from "src/utils/storage";
 import {loadPools} from "src/utils/data";
 import TimeLine from "components/functional/TimeLine.vue";
 import {syncCharactersInformation} from "src/utils/CharacterInfo";
@@ -69,7 +70,15 @@ export default {
   },
   methods: {
     async loadData() {
-      let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      let active = await readLocalStorage("active");
+      let userData = new UserData(active);
+      await userData.initialize();
+      // let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      let rawData = userData.data.poolData;
+      if (rawData.length === 0) {
+        this.noData = true;
+        return;
+      }
       this.poolsDict = loadPools(rawData, this.allowStandardPool);
       this.pools = Object.values(this.poolsDict);
       this.pools.sort((a, b) => {
@@ -133,6 +142,7 @@ export default {
     enableNewCharShow: true,
     characterInfo: {},
     enableTimeLine: true,
+    noData: false,
   })
 }
 </script>

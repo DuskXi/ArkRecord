@@ -1,85 +1,89 @@
 <template>
   <div class="q-gutter-sm">
-    <q-btn-toggle rounded class="my-custom-toggle" toggle-color="primary" color="white" text-color="primary" v-model="analyzeMode" :options="[{label: '六星', value: '六星'},{label: '五星', value: '五星'}]"/>
+    <q-btn-toggle rounded class="my-custom-toggle" toggle-color="primary" color="white" text-color="primary" v-model="analyzeMode"
+                  :options="[{label: '六星', value: '六星'},{label: '五星', value: '五星'}]"/>
   </div>
-  <q-badge color="blue"> 总体分析:</q-badge>
-  <div class="row" v-if="drawCardSets.length > 0">
-    <div class="col-1-md col-12-sm">
-      <div class="text-h5 vertical-middle text-green-10"> 当前阶段:</div>
-    </div>
-    <div class="col-11-md col-12-sm">
-      <div class="text-h6 vertical-middle">已经 <span style="color: red">{{ drawCardSets[drawCardSets.length - 1].records.length }}</span> 次没有出{{ analyzeMode }}了</div>
-      <div class="text-h6 vertical-middle">{{ analyzeMode }}理论预期需要 <span style="color: red">{{ analyzeMode === '六星' ? expectedStar6 : expectedStar5 }}</span> 次抽出</div>
-      <div class="text-h6 vertical-middle" v-if="drawCardSets[drawCardSets.length-1].records.length > (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">现在较为脸黑, 比预期值多花了 <span
-        style="color: red">{{ (drawCardSets[drawCardSets.length - 1].records.length - (analyzeMode.value === '六星' ? expectedStar6 : expectedStar5)).toFixed(2) }}</span>
-        抽还没出
+  <div class="text-h4" v-if="noData">此页面无相应类型数据</div>
+  <div v-else>
+    <q-badge color="blue"> 总体分析:</q-badge>
+    <div class="row" v-if="drawCardSets.length > 0">
+      <div class="col-1-md col-12-sm">
+        <div class="text-h5 vertical-middle text-green-10"> 当前阶段:</div>
       </div>
-      <div class="text-h6 vertical-middle" v-if="drawCardSets[drawCardSets.length-1].records.length <= (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">
-        距离预期值(预期出{{ analyzeMode }}的次数)还差
-        <span style="color: red">{{ (expectedStar6 - drawCardSets[drawCardSets.length - 1].records.length).toFixed(2) }}</span> 抽
-      </div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-2-md col-12-sm">
-      <div class="text-h5 vertical-middle text-green-10">欧非情况(全部数据):</div>
-    </div>
-    <div class="col-10-md col-12-sm">
-      <div :class="'text-h6 vertical-middle '+luckyValue[1]">{{ luckyValue[0] }}</div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-2-md col-12-sm">
-      <div class="text-h5 vertical-middle text-blue-grey-7"> 欧非情况(近期30天数据):</div>
-    </div>
-    <div class="col-10-md col-12-sm">
-      <div :class="'text-h6 vertical-middle '+luckyValueRecent[1]">{{ luckyValueRecent[0] }}</div>
-    </div>
-  </div>
-
-  <q-badge color="blue"> 抽卡片段分析:</q-badge>
-  <q-select style="margin-top: 20px;" filled v-model="setChoose" :options="setsOptions" label="抽卡片段"/>
-  <div class="row" v-if="setChoose !=null">
-    <div class="col-1-md col-12-sm">
-      <div class="text-h5 vertical-middle text-green-7"> 统计学分析:</div>
-    </div>
-    <div class="col-11-md col-12-sm">
-      <div class="text-h6 vertical-middle">
-        在 <span style="color: red">{{ setChoose.value.records.length }}</span>
-        抽中获得一个{{ analyzeMode }}这个整体事件的发生概率(二项分布)为
-        <span style="color: deepskyblue">{{ (star6DistributionTable[setChoose.value.records.length + 1] * 100).toFixed(2) }}%</span>
-      </div>
-      <div class="text-h6 vertical-middle">
-        {{ analyzeMode }}理论预期需要 <span style="color: red">{{ analyzeMode === '六星' ? expectedStar6 : expectedStar5 }}</span> 次抽出
-      </div>
-      <div class="text-h6 vertical-middle" v-if="setChoose.value.records.length !== (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">
-        这次抽卡:
-        <span :class="luckyValueChoose[1]">{{ luckyValueChoose[0] }}</span>
-        , 比预期值{{ setChoose.value.records.length < (analyzeMode === '六星' ? expectedStar6 : expectedStar5) ? '少' : '多' }}花了
-        <span style="color: red">{{ abs((expectedStar6 - setChoose.value.records.length).toFixed(2)) }}</span> 抽 ({{ (100 * setChoose.value.records.length / expectedStar6).toFixed(2) }}%)
-      </div>
-      <div class="text-h6 vertical-middle" v-if="setChoose.value.records.length === (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">这次抽卡中规中矩, 和理论预期值相符</div>
-    </div>
-  </div>
-  <q-badge color="blue"> 卡池欧非度分析(试验):</q-badge>
-  <q-select style="margin-top: 20px;" filled v-model="poolChoose" :options="poolsOptions" label="卡池选择"/>
-  <div class="row" v-if="poolChoose !=null" :key="poolSummaryKey">
-    <div class="col-1-md col-12-sm"></div>
-    <div class="col-11-md col-12-sm">
-      <div class="text-h6 vertical-middle"> 总计<span style="color: red">{{ poolChoose.value.records.length }}</span>抽</div>
-      <div class="text-h6 vertical-middle"> 其中六星: <span style="color: red">{{ poolChoose.value.star6.length }}</span>抽
-        , 占比: <span style="color: deepskyblue">{{ (100 * poolChoose.value.star6.length / poolChoose.value.records.length).toFixed(2) }}%</span></div>
-      <div class="text-h6 vertical-middle"> 其中五星: <span style="color: red">{{ poolChoose.value.star5.length }}</span>抽
-        , 占比: <span style="color: deepskyblue">{{ (100 * poolChoose.value.star5.length / poolChoose.value.records.length).toFixed(2) }}%</span></div>
-
-      <div class="row">
-        <div class="col-1-md col-12-sm">
-          <div class="text-h6 vertical-middle"> 欧非情况:</div>
+      <div class="col-11-md col-12-sm">
+        <div class="text-h6 vertical-middle">已经 <span style="color: red">{{ drawCardSets[drawCardSets.length - 1].records.length }}</span> 次没有出{{ analyzeMode }}了</div>
+        <div class="text-h6 vertical-middle">{{ analyzeMode }}理论预期需要 <span style="color: red">{{ analyzeMode === '六星' ? expectedStar6 : expectedStar5 }}</span> 次抽出</div>
+        <div class="text-h6 vertical-middle" v-if="drawCardSets[drawCardSets.length-1].records.length > (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">现在较为脸黑, 比预期值多花了 <span
+          style="color: red">{{ (drawCardSets[drawCardSets.length - 1].records.length - (analyzeMode.value === '六星' ? expectedStar6 : expectedStar5)).toFixed(2) }}</span>
+          抽还没出
         </div>
-        <div class="col-11-md col-12-sm">
-          <div class="text-h6 vertical-middle"> 六星:<span :class="poolLuckyValue6[1]">{{ poolLuckyValue6[0] }}</span></div>
-          <div class="text-h6 vertical-middle"> 五星:<span :class="poolLuckyValue5[1]">{{ poolLuckyValue5[0] }}</span></div>
-          <div class="text-h6 vertical-middle"> 综合:<span :class="poolLuckyValue[1]">{{ poolLuckyValue[0] }}</span></div>
+        <div class="text-h6 vertical-middle" v-if="drawCardSets[drawCardSets.length-1].records.length <= (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">
+          距离预期值(预期出{{ analyzeMode }}的次数)还差
+          <span style="color: red">{{ (expectedStar6 - drawCardSets[drawCardSets.length - 1].records.length).toFixed(2) }}</span> 抽
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-2-md col-12-sm">
+        <div class="text-h5 vertical-middle text-green-10">欧非情况(全部数据):</div>
+      </div>
+      <div class="col-10-md col-12-sm">
+        <div :class="'text-h6 vertical-middle '+luckyValue[1]">{{ luckyValue[0] }}</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-2-md col-12-sm">
+        <div class="text-h5 vertical-middle text-blue-grey-7"> 欧非情况(近期30天数据):</div>
+      </div>
+      <div class="col-10-md col-12-sm">
+        <div :class="'text-h6 vertical-middle '+luckyValueRecent[1]">{{ luckyValueRecent[0] }}</div>
+      </div>
+    </div>
+
+    <q-badge color="blue"> 抽卡片段分析:</q-badge>
+    <q-select style="margin-top: 20px;" filled v-model="setChoose" :options="setsOptions" label="抽卡片段"/>
+    <div class="row" v-if="setChoose !=null">
+      <div class="col-1-md col-12-sm">
+        <div class="text-h5 vertical-middle text-green-7"> 统计学分析:</div>
+      </div>
+      <div class="col-11-md col-12-sm">
+        <div class="text-h6 vertical-middle">
+          在 <span style="color: red">{{ setChoose.value.records.length }}</span>
+          抽中获得一个{{ analyzeMode }}这个整体事件的发生概率(二项分布)为
+          <span style="color: deepskyblue">{{ (star6DistributionTable[setChoose.value.records.length + 1] * 100).toFixed(2) }}%</span>
+        </div>
+        <div class="text-h6 vertical-middle">
+          {{ analyzeMode }}理论预期需要 <span style="color: red">{{ analyzeMode === '六星' ? expectedStar6 : expectedStar5 }}</span> 次抽出
+        </div>
+        <div class="text-h6 vertical-middle" v-if="setChoose.value.records.length !== (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">
+          这次抽卡:
+          <span :class="luckyValueChoose[1]">{{ luckyValueChoose[0] }}</span>
+          , 比预期值{{ setChoose.value.records.length < (analyzeMode === '六星' ? expectedStar6 : expectedStar5) ? '少' : '多' }}花了
+          <span style="color: red">{{ abs((expectedStar6 - setChoose.value.records.length).toFixed(2)) }}</span> 抽 ({{ (100 * setChoose.value.records.length / expectedStar6).toFixed(2) }}%)
+        </div>
+        <div class="text-h6 vertical-middle" v-if="setChoose.value.records.length === (analyzeMode === '六星' ? expectedStar6 : expectedStar5)">这次抽卡中规中矩, 和理论预期值相符</div>
+      </div>
+    </div>
+    <q-badge color="blue"> 卡池欧非度分析(试验):</q-badge>
+    <q-select style="margin-top: 20px;" filled v-model="poolChoose" :options="poolsOptions" label="卡池选择"/>
+    <div class="row" v-if="poolChoose !=null" :key="poolSummaryKey">
+      <div class="col-1-md col-12-sm"></div>
+      <div class="col-11-md col-12-sm">
+        <div class="text-h6 vertical-middle"> 总计<span style="color: red">{{ poolChoose.value.records.length }}</span>抽</div>
+        <div class="text-h6 vertical-middle"> 其中六星: <span style="color: red">{{ poolChoose.value.star6.length }}</span>抽
+          , 占比: <span style="color: deepskyblue">{{ (100 * poolChoose.value.star6.length / poolChoose.value.records.length).toFixed(2) }}%</span></div>
+        <div class="text-h6 vertical-middle"> 其中五星: <span style="color: red">{{ poolChoose.value.star5.length }}</span>抽
+          , 占比: <span style="color: deepskyblue">{{ (100 * poolChoose.value.star5.length / poolChoose.value.records.length).toFixed(2) }}%</span></div>
+
+        <div class="row">
+          <div class="col-1-md col-12-sm">
+            <div class="text-h6 vertical-middle"> 欧非情况:</div>
+          </div>
+          <div class="col-11-md col-12-sm">
+            <div class="text-h6 vertical-middle"> 六星:<span :class="poolLuckyValue6[1]">{{ poolLuckyValue6[0] }}</span></div>
+            <div class="text-h6 vertical-middle"> 五星:<span :class="poolLuckyValue5[1]">{{ poolLuckyValue5[0] }}</span></div>
+            <div class="text-h6 vertical-middle"> 综合:<span :class="poolLuckyValue[1]">{{ poolLuckyValue[0] }}</span></div>
+          </div>
         </div>
       </div>
     </div>
@@ -87,7 +91,7 @@
 </template>
 
 <script>
-import {readLocalStorage} from "src/utils/storage";
+import {readLocalStorage, UserData} from "src/utils/storage";
 import {buildTotalData, loadPools} from "src/utils/data";
 import {buildSet, generateStar6DistributionTable, getExpectedRemainToGetStar6, getExpectedRemainToGetStar5} from "src/utils/analyze";
 import {generateSpace, getStringSpaceLength} from "src/utils/utils";
@@ -107,7 +111,13 @@ export default {
       return array.reduce((a, b) => a + b, 0);
     },
     async loadData() {
-      let rawData = await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      let userData = new UserData(await readLocalStorage('active'));
+      await userData.initialize();
+      let rawData = userData.data.poolData; // await readLocalStorage(this.bilibili ? "ArknightsCardInformationB" : "ArknightsCardInformation");
+      if (rawData.length === 0) {
+        this.noData = true;
+        return;
+      }
       this.poolsDict = loadPools(rawData);
       this.pools = Object.values(this.poolsDict);
       this.poolsOptions = this.pools.map(pool => ({value: pool, label: pool.name})).filter(pool => pool.label !== "常驻标准寻访");
@@ -182,7 +192,8 @@ export default {
   },
   async mounted() {
     await this.loadData();
-    this.init();
+    if (!this.noData)
+      this.init();
   },
   watch: {
     analyzeMode: function (val) {
@@ -231,6 +242,7 @@ export default {
     poolLuckyValue6: '',
     poolLuckyValue: '',
     poolSummaryKey: new Date().getTime(),
+    noData: false,
   }),
 }
 </script>

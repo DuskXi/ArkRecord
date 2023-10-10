@@ -11,19 +11,17 @@
 
           <div class="text-caption vertical-middle"> ArkRecord 不会收集上传你的任何信息数据，所有从鹰角网站获取的数据都只会保存在本地。</div>
         </div>
-        <div class="q-gutter-sm">
-          <q-badge :color="login?'green':'orange'">官服: {{ login ? '已' : '未' }}登录</q-badge>
-          <a v-if="!login" href="https://ak.hypergryph.com/user/home" target="_blank"> 点击前往
-            <q-icon name="open_in_new"/>
-          </a>
-          <q-badge :color="loginB?'green':'orange'">B服: {{ loginB ? '已' : '未' }}登录</q-badge>
-          <a v-if="!loginB" href="https://ak.hypergryph.com/user/bilibili/home" target="_blank"> 点击前往
-            <q-icon name="open_in_new"/>
-          </a>
-          <q-badge color="blue" v-if="usageInfo.total >= 0">使用者: {{ usageInfo.total }} 个</q-badge>
-          <q-badge color="blue" v-if="usageInfo.day180 >= 0">半年内活跃使用者: {{ usageInfo.day180 }} 个</q-badge>
-          <q-badge color="blue" v-if="usageInfo.day30 >= 0">一个月内活跃使用者: {{ usageInfo.day30 }} 个</q-badge>
-        </div>
+<!--        <div class="q-gutter-sm">-->
+<!--          <q-badge :color="login?'green':'orange'">官服: {{ login ? '已' : '未' }}登录</q-badge>-->
+<!--          <a v-if="!login" href="https://ak.hypergryph.com/user/home" target="_blank"> 点击前往-->
+<!--            <q-icon name="open_in_new"/>-->
+<!--          </a>-->
+<!--          <q-badge :color="loginB?'green':'orange'">B服: {{ loginB ? '已' : '未' }}登录</q-badge>-->
+<!--          <a v-if="!loginB" href="https://ak.hypergryph.com/user/bilibili/home" target="_blank"> 点击前往-->
+<!--            <q-icon name="open_in_new"/>-->
+<!--          </a>-->
+<!--        </div>-->
+        <tokenManager :on-active="onActive"/>
         <div class="q-gutter-sm" v-if="loginB">
           <q-toggle v-model="bilibili" label="B服"/>
         </div>
@@ -33,12 +31,12 @@
                         v-model="shownMode" :options="showOptions" class="my-custom-toggle" toggle-color="primary" color="white" text-color="primary"/>
         </div>
         <div class="col" style="margin-bottom: 20px; " :key="containerKey" v-if="pools.length > 0">
-          <poolsTable v-if="shownMode === '1'" :bilibili="bilibili"></poolsTable>
-          <totalTable v-if="shownMode === '2'" :bilibili="bilibili"></totalTable>
-          <normalSplitTable v-if="shownMode === '3'" :bilibili="bilibili"></normalSplitTable>
-          <chartShow v-if="shownMode === '4'" :bilibili="bilibili"></chartShow>
-          <statisticsAnalyze v-if="shownMode === '5'" :bilibili="bilibili"></statisticsAnalyze>
-          <stoneAndRecharge v-if="shownMode === '6'" :bilibili="bilibili"/>
+          <poolsTable v-if="shownMode === '1'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></poolsTable>
+          <totalTable v-if="shownMode === '2'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></totalTable>
+          <normalSplitTable v-if="shownMode === '3'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></normalSplitTable>
+          <chartShow v-if="shownMode === '4'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></chartShow>
+          <statisticsAnalyze v-if="shownMode === '5'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"></statisticsAnalyze>
+          <stoneAndRecharge v-if="shownMode === '6'" :bilibili="bilibili" :key="tabKeys[parseInt(shownMode)]"/>
         </div>
         <div class="text-h5 vertical-middle	" v-else>
           无数据, 请从右下角导入或者在登录后点击右下角的刷新按钮
@@ -64,7 +62,7 @@
 <script>
 import config from '../../package.json';
 import {loadPools} from '../utils/data';
-import {readLocalStorage} from '../utils/storage';
+import {readLocalStorage, writeLocalStorage} from '../utils/storage';
 import {defineComponent} from "vue";
 import {Statistic} from "../utils/Usage";
 import ChartShow from "components/tabs/ChartShow.vue";
@@ -78,6 +76,7 @@ import InformationSet from "components/functional/InformationSet.vue";
 import StoneAndRecharge from "components/tabs/StoneAndRecharge.vue";
 import SettingManager from "components/SettingManager.vue";
 import AuthorMessage from "components/functional/AuthorMessage.vue";
+import TokenManager from "components/functional/TokenManager.vue";
 
 
 export default defineComponent({
@@ -94,6 +93,7 @@ export default defineComponent({
     stoneAndRecharge: StoneAndRecharge,
     settingManager: SettingManager,
     authorMessage: AuthorMessage,
+    tokenManager: TokenManager,
   },
   data: () => ({
     version: config.version,
@@ -107,6 +107,7 @@ export default defineComponent({
     loginB: false,
     containerKey: new Date().getTime(),
     dataUpdated: new Date().getTime(),
+    tabKeys: [],
     usageInfo: {
       total: -1,
       day30: -1,
@@ -129,6 +130,9 @@ export default defineComponent({
       this.loginB = loginB;
       if (loginB && !login)
         this.bilibili = true;
+    },
+    async onActive() {
+      this.tabKeys[parseInt(this.shownMode)] = new Date().getTime();
     },
     async syncUsageInfo() {
       let statistic = new Statistic();
@@ -153,10 +157,14 @@ export default defineComponent({
     }
   },
   mounted() {
+    this.tabKeys = [];
+    for (let i = 0; i < this.showOptions.length; i++) {
+      this.tabKeys.push(new Date().getTime());
+    }
     this.syncUsageInfo()
     this.loginCheck()
     this.loadData()
-    chrome.storage.local.set({"indexVisited": true});
+    writeLocalStorage("indexVisited", true);
   }
 })
 </script>
