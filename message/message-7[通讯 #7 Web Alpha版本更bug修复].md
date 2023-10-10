@@ -7,6 +7,8 @@
 
 以上bug均已修复
 
+插件版本在账号管理代码方面落后于web版本，还在修
+
 ![image](https://user-images.githubusercontent.com/84715902/185678593-57eecdc8-ebab-4634-bdc9-c2e8f2b7dd72.png)
 ![image](https://user-images.githubusercontent.com/84715902/185678643-15443392-62f0-4f32-9c52-1d28d5541bde.png)
 ![image](https://user-images.githubusercontent.com/84715902/185678659-c730cd1e-b504-4bd3-873e-84fbd7653f40.png)
