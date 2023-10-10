@@ -17,7 +17,7 @@
           <div class="column inline" v-for="(chars, index) in getNewCharacters(pool)" :key="index">
             <div class="col" style="background-color: rgba(255,255,255, 0.3)">
               <q-avatar rounded size="100px">
-                <img :src="characterInfo[chars.character].image"/>
+                <img :src="characterInfo[chars.character] ? characterInfo[chars.character].image: ''"/>
                 <q-badge floating color="red">new!</q-badge>
                 <q-badge class="absolute-bottom item-center" style="transform: scale(0.8); background-color: rgba(0,0,0,0)"><span>{{ chars.star }}</span></q-badge>
               </q-avatar>

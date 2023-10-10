@@ -1,5 +1,5 @@
 <template>
-  <q-page style="min-width: 35px">
+  <q-page style="min-width: 350px">
     <div class="column items-center">
       <div class="col items-center">
         <q-btn style="margin-top:20px;margin-bottom:20px;" color="primary" icon="info" label="查看详细数据" @click="gotoInformationPage">
