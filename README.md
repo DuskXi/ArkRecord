@@ -1,5 +1,16 @@
 # ArkRecord (Base on Quasar) [![wakatime](https://wakatime.com/badge/user/23381c4b-372b-46eb-b687-994db38af858/project/4c484c69-c10e-4944-8b01-72c8a57a0c92.svg)](https://wakatime.com/badge/user/23381c4b-372b-46eb-b687-994db38af858/project/4c484c69-c10e-4944-8b01-72c8a57a0c92)
 
+> [!IMPORTANT]
+> **浏览器插件版本暂时停止开发，后续只持续维护网页版。**
+>
+> - 网页版：<https://ark.kaltsit.dev>（1.0.0，2026-10-16 发布，支持明日方舟与明日方舟：终末地）
+> - 网页版代码：[DuskXi/ArkRecord-Web](https://github.com/DuskXi/ArkRecord-Web)
+>
+> 插件使用的旧版鹰角接口已经失效，插件现在无法同步新的寻访记录。插件里已有的数据可以在插件的“数据管理”里导出 JSON，再到网页版的“数据”页导入：选择要导入到哪个明日方舟账号即可，寻访、源石、充值记录都会导入，重复导入不会重复计数。
+>
+> 下面是插件版原来的说明，保留作为记录。
+
+
 ## 完成度列表(TODO List):
 
 - [X] 显示和可导出源石/充值记录
